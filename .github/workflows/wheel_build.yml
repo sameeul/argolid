@@ -43,14 +43,14 @@ jobs:
           CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_SKIP: "*musllinux*"
           CIBW_BEFORE_ALL_WINDOWS: ci-utils\install_prereq_win.bat &&
-                                   xcopy /E /I /y local_install C:\TEMP\omepyrgen_bld\local_install 
-          CIBW_ENVIRONMENT_WINDOWS: PATH="$TEMP\\omepyrgen\\bin;$PATH" ON_GITHUB="TRUE" OMEPYRGEN_DEP_DIR="C:\\TEMP\\omepyrgen_bld\\local_install"
+                                   xcopy /E /I /y local_install C:\TEMP\argolid_bld\local_install 
+          CIBW_ENVIRONMENT_WINDOWS: PATH="$TEMP\\argolid\\bin;$PATH" ON_GITHUB="TRUE" ARGOLID_DEP_DIR="C:\\TEMP\\argolid_bld\\local_install"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} {wheel}"
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: omepyrgen-wheels
+          name: argolid-wheels
           path: dist/*.whl
           retention-days: 1

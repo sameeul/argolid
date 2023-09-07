@@ -1,4 +1,4 @@
-from omepyrgen import PyramidGenerartor
+from argolid import PyramidGenerartor
 from time import time
 
 def test_single_image():

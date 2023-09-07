@@ -4,7 +4,7 @@
 #
 if [ -z "$1" ]
 then
-      echo "No path to the OmePyrGen source location provided"
+      echo "No path to the Argolid source location provided"
       echo "Creating local_install directory"
       LOCAL_INSTALL_DIR="local_install"
 else

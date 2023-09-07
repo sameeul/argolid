@@ -198,7 +198,7 @@ void OmeTiffCollToChunked::GenerateOmeXML(const std::string& image_name, const s
     // Add the namespaces and attributes to the root element
     omeNode.append_attribute("xmlns") = "http://www.openmicroscopy.org/Schemas/OME/2016-06";
     omeNode.append_attribute("xmlns:xsi") = "http://www.w3.org/2001/XMLSchema-instance";
-    omeNode.append_attribute("Creator") = "OmePyrGen 0.0.1";
+    omeNode.append_attribute("Creator") = "Argolid 0.0.1";
     omeNode.append_attribute("UUID") = "urn:uuid:ce3367ae-0512-4e87-a045-20d87db14001";
     omeNode.append_attribute("xsi:schemaLocation") = "http://www.openmicroscopy.org/Schemas/OME/2016-06 http://www.openmicroscopy.org/Schemas/OME/2016-06/ome.xsd";
 

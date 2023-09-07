@@ -1,8 +1,8 @@
-# OmePyrGen
+# Argolid
 
 ## Build Requirements
 
-`OmePyrGen` uses `Tensorstore` for reading and writing pixel data. So `Tensorstore` build requirements are needed to be satisfied. 
+`Argolid` uses `Tensorstore` for reading and writing pixel data. So `Tensorstore` build requirements are needed to be satisfied. 
 For Linux, these are the requirements:
 - `GCC` 10 or later
 - `Clang` 8 or later
@@ -15,19 +15,19 @@ For Linux, these are the requirements:
 
 ## Building and Installing
 
-Here is an example of building and installing `OmePyrGen` in a Python virtual environment.
+Here is an example of building and installing `Argolid` in a Python virtual environment.
 ```
 python -m virtualenv venv
 source venv/bin/activate
 pip install cmake
-git clone --recurse-submodules https://github.com/sameeul/omepyrgen.git 
-cd omepyrgen
+git clone --recurse-submodules https://github.com/sameeul/argolid.git 
+cd argolid
 python setup.py install
 ```
 
 ## Usage
 
-OmePyrGen can generate Pyramids from a single image or an image collection with a stitching vector provided. It can generate three different kind of pyramids:
+Argolid can generate Pyramids from a single image or an image collection with a stitching vector provided. It can generate three different kind of pyramids:
 - Neuroglancer compatible Zarr (NG_Zarr)
 - Precomputed Neuroglancer (PCNG)
 - Viv compatible Zarr (Viv)
@@ -37,7 +37,7 @@ dictionary, `mean` will be used as the default downsampling method
 
 Here is an example of generating a pyramid from a single image.
 ```
-from omepyrgen import PyramidGenerartor
+from argolid import PyramidGenerartor
 input_file = "/home/samee/axle/data/test_image.ome.tif"
 output_dir = "/home/samee/axle/data/test_image_ome_zarr"
 min_dim = 1024
@@ -47,7 +47,7 @@ pyr_gen.generate_from_single_image(input_file, output_dir, min_dim, "NG_Zarr", {
 
 Here is an example of generating a pyramid from a collection of images and a stitching vector.
 ```
-from omepyrgen import PyramidGenerartor
+from argolid import PyramidGenerartor
 input_dir = "/home/samee/axle/data/intensity1"
 file_pattern = "x{x:d}_y{y:d}_c{c:d}.ome.tiff"
 output_dir = "/home/samee/axle/data/test_assembly_out"

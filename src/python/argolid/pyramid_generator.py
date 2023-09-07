@@ -1,4 +1,4 @@
-from .libomepyrgen import OmeTiffToChunkedPyramidCPP, VisType, DSType
+from .libargolid import OmeTiffToChunkedPyramidCPP, VisType, DSType
 
 class PyramidGenerartor:
     def __init__(self, log_level = None) -> None:

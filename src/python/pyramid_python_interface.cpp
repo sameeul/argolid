@@ -4,7 +4,7 @@
 #include <pybind11/stl.h>
 namespace py = pybind11;
 
-PYBIND11_MODULE(libomepyrgen, m) {
+PYBIND11_MODULE(libargolid, m) {
     py::class_<OmeTiffToChunkedPyramid, std::shared_ptr<OmeTiffToChunkedPyramid>>(m, "OmeTiffToChunkedPyramidCPP") \
     .def(py::init<>()) \
     .def("GenerateFromSingleFile", &OmeTiffToChunkedPyramid::GenerateFromSingleFile) \

@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.24)
-project(OmePyrGen)
+project(Argolid)
 #==== Compiler Options
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # this is a workaround for GitHub Action for wheelbuiling
-if(DEFINED ENV{OMEPYRGEN_DEP_DIR})
-	set(CMAKE_PREFIX_PATH $ENV{OMEPYRGEN_DEP_DIR})
-	link_directories($ENV{OMEPYRGEN_DEP_DIR}/lib)
+if(DEFINED ENV{ARGOLID_DEP_DIR})
+	set(CMAKE_PREFIX_PATH $ENV{ARGOLID_DEP_DIR})
+	link_directories($ENV{ARGOLID_DEP_DIR}/lib)
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -62,26 +62,26 @@ if (Threads_FOUND)
     endif (CMAKE_USE_PTHREADS_INIT)
     list(APPEND Build_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 else ()
-	message(STATUS "Unable to find threads. OmePyrGen must have a threading library i.e. pthreads.")
+	message(STATUS "Unable to find threads. Argolid must have a threading library i.e. pthreads.")
 endif ()
 
 # Python bindings.
 # PyBind
 add_subdirectory(lib/pybind11)
 
-pybind11_add_module(libomepyrgen 
+pybind11_add_module(libargolid 
   ${SOURCE}
   src/python/pyramid_python_interface.cpp
 )
 
-#target_compile_definitions(libomepyrgen PRIVATE WITH_PYTHON_H)
+#target_compile_definitions(libargolid PRIVATE WITH_PYTHON_H)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fPIC")
-  target_link_libraries(libomepyrgen PRIVATE stdc++fs)
+  target_link_libraries(libargolid PRIVATE stdc++fs)
 endif()
 
-target_link_libraries(libomepyrgen PRIVATE tensorstore::tensorstore tensorstore::all_drivers filepattern::filepattern)
-target_link_libraries(libomepyrgen PRIVATE ${Build_LIBRARIES})  
+target_link_libraries(libargolid PRIVATE tensorstore::tensorstore tensorstore::all_drivers filepattern::filepattern)
+target_link_libraries(libargolid PRIVATE ${Build_LIBRARIES})  
 
 target_link_libraries(
   test_pyrgen

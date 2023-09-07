@@ -92,18 +92,18 @@ with open("README.md", "r") as fh:
 
 
 setup(
-    name="omepyrgen",
+    name="argolid",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(dict(build_ext=CMakeBuild)),
     author="Sameeul Bashir Samee",
     author_email="sameeul.samee@axleinfo.com",
-    url="https://github.com/sameeul/omepyrgen",
+    url="https://github.com/sameeul/argolid",
     description="Pyramid Generator For OMETiff",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=find_packages("src/python"),
     package_dir={"": "src/python"},
-    ext_modules=[CMakeExtension("omepyrgen/libomepyrgen")],
+    ext_modules=[CMakeExtension("argolid/libargolid")],
     test_suite="tests",
     zip_safe=False,
     python_requires=">=3.8",
