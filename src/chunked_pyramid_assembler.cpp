@@ -1,4 +1,4 @@
-#include "zarr_pyramid_assembler.h"
+#include "chunked_pyramid_assembler.h"
 #include "utilities.h"
 #include "pugixml.hpp"
 #include "tiffio.h"

@@ -1,4 +1,4 @@
-#include "ome_tiff_to_zarr_pyramid.h"
+#include "ome_tiff_to_chunked_pyramid.h"
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -19,19 +19,19 @@ void OmeTiffToChunkedPyramid::GenerateFromSingleFile(  const std::string& input_
         int min_level = static_cast<int>(ceil(log2(min_dim)));
         TIFFClose(tiff_);     
         std::string tiff_file_name = fs::path(input_file).stem().string();
-        std::string zarr_file_dir = output_dir + "/" + tiff_file_name + ".zarr";
+        std::string chunked_file_dir = output_dir + "/" + tiff_file_name + ".zarr";
         if (v == VisType::Viv){
-            zarr_file_dir = zarr_file_dir + "/data.zarr/0";
+            chunked_file_dir = chunked_file_dir + "/data.zarr/0";
         }
 
         int base_level_key = 0;
         auto max_level_key = max_level-min_level+1+base_level_key;
-        _zpw_ptr = std::make_unique<OmeTiffToZarrConverter>();
+        _zpw_ptr = std::make_unique<OmeTiffToChunkedConverter>();
         PLOG_INFO << "Converting base image...";
-        _zpw_ptr->Convert(input_file, zarr_file_dir, std::to_string(base_level_key), v, _th_pool);
+        _zpw_ptr->Convert(input_file, chunked_file_dir, std::to_string(base_level_key), v, _th_pool);
         PLOG_INFO << "Generating image pyramids...";
         _zpg_ptr = std::make_unique<ChunkedBaseToPyramid>();
-        _zpg_ptr->CreatePyramidImages(zarr_file_dir, zarr_file_dir, 0, min_dim, v, channel_ds_config, _th_pool);
+        _zpg_ptr->CreatePyramidImages(chunked_file_dir, chunked_file_dir, 0, min_dim, v, channel_ds_config, _th_pool);
         PLOG_INFO << "Writing metadata...";
         WriteMultiscaleMetadataForSingleFile(input_file, output_dir, base_level_key, max_level_key, v);
 
@@ -42,14 +42,14 @@ void OmeTiffToChunkedPyramid::WriteMultiscaleMetadataForSingleFile( const std::s
                                                                     int min_level, int max_level, VisType v)
 {
     std::string tiff_file_name = fs::path(input_file).stem().string();
-    std::string zarr_file_dir = output_dir + "/" + tiff_file_name + ".zarr";
+    std::string chunked_file_dir = output_dir + "/" + tiff_file_name + ".zarr";
     if(v == VisType::NG_Zarr){
 
-        WriteTSZattrFile(tiff_file_name, zarr_file_dir, min_level, max_level);
+        WriteTSZattrFile(tiff_file_name, chunked_file_dir, min_level, max_level);
     } else if (v == VisType::Viv){
-        ExtractAndWriteXML(input_file, zarr_file_dir);
-        WriteVivZattrFile(tiff_file_name, zarr_file_dir+"/data.zarr/0/", min_level, max_level);
-        WriteVivZgroupFiles(zarr_file_dir);
+        ExtractAndWriteXML(input_file, chunked_file_dir);
+        WriteVivZattrFile(tiff_file_name, chunked_file_dir+"/data.zarr/0/", min_level, max_level);
+        WriteVivZgroupFiles(chunked_file_dir);
     }
 }
 
@@ -57,13 +57,13 @@ void OmeTiffToChunkedPyramid::WriteMultiscaleMetadataForSingleFile( const std::s
 void OmeTiffToChunkedPyramid::WriteMultiscaleMetadataForImageCollection(const std::string& image_file_name , const std::string& output_dir, 
                                                                         int min_level, int max_level, VisType v)
 {
-    std::string zarr_file_dir = output_dir + "/" + image_file_name + ".zarr";
+    std::string chunked_file_dir = output_dir + "/" + image_file_name + ".zarr";
     if(v == VisType::NG_Zarr){
-        WriteTSZattrFile(image_file_name, zarr_file_dir, min_level, max_level);
+        WriteTSZattrFile(image_file_name, chunked_file_dir, min_level, max_level);
     } else if (v == VisType::Viv){
-        _tiff_coll_to_zarr_ptr->GenerateOmeXML(image_file_name, zarr_file_dir+"/METADATA.ome.xml");                   
-        WriteVivZattrFile(image_file_name, zarr_file_dir+"/data.zarr/0/", min_level, max_level);
-        WriteVivZgroupFiles(zarr_file_dir);
+        _tiff_coll_to_chunked_ptr->GenerateOmeXML(image_file_name, chunked_file_dir+"/METADATA.ome.xml");                   
+        WriteVivZattrFile(image_file_name, chunked_file_dir+"/data.zarr/0/", min_level, max_level);
+        WriteVivZgroupFiles(chunked_file_dir);
     }
 }
 
@@ -175,22 +175,22 @@ void OmeTiffToChunkedPyramid::GenerateFromCollection(
                 int min_dim, 
                 VisType v,
                 std::unordered_map<std::int64_t, DSType>& channel_ds_config){
-    _tiff_coll_to_zarr_ptr = std::make_unique<OmeTiffCollToChunked>();  
-    std::string zarr_file_dir = output_dir + "/" + image_name + ".zarr";
+    _tiff_coll_to_chunked_ptr = std::make_unique<OmeTiffCollToChunked>();  
+    std::string chunked_file_dir = output_dir + "/" + image_name + ".zarr";
     if (v == VisType::Viv){
-        zarr_file_dir = zarr_file_dir + "/data.zarr/0";
+        chunked_file_dir = chunked_file_dir + "/data.zarr/0";
     }
 
     int base_level_key = 0;
     PLOG_INFO << "Assembling base image...";
-    _tiff_coll_to_zarr_ptr->Assemble(collection_path, stitch_vector_file, zarr_file_dir, std::to_string(base_level_key), v, _th_pool);
-    int max_level = static_cast<int>(ceil(log2(std::max({  _tiff_coll_to_zarr_ptr->image_width(), 
-                                                        _tiff_coll_to_zarr_ptr->image_height()}))));
+    _tiff_coll_to_chunked_ptr->Assemble(collection_path, stitch_vector_file, chunked_file_dir, std::to_string(base_level_key), v, _th_pool);
+    int max_level = static_cast<int>(ceil(log2(std::max({  _tiff_coll_to_chunked_ptr->image_width(), 
+                                                        _tiff_coll_to_chunked_ptr->image_height()}))));
     int min_level = static_cast<int>(ceil(log2(min_dim)));
     auto max_level_key = max_level-min_level+1+base_level_key;
     PLOG_INFO << "Generating image pyramids...";
     _zpg_ptr = std::make_unique<ChunkedBaseToPyramid>();
-    _zpg_ptr->CreatePyramidImages(zarr_file_dir, zarr_file_dir,base_level_key, min_dim, v, channel_ds_config, _th_pool);
+    _zpg_ptr->CreatePyramidImages(chunked_file_dir, chunked_file_dir,base_level_key, min_dim, v, channel_ds_config, _th_pool);
     PLOG_INFO << "Writing metadata...";
     WriteMultiscaleMetadataForImageCollection(image_name, output_dir, base_level_key, max_level_key, v);
 }

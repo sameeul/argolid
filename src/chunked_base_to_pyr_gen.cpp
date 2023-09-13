@@ -1,4 +1,4 @@
-#include "zarr_base_to_pyr_gen.h"
+#include "chunked_base_to_pyr_gen.h"
 #include "downsample.h"
 #include "utilities.h"
 #include <plog/Log.h>
@@ -34,7 +34,7 @@ using ::tensorstore::Context;
 using ::tensorstore::internal_zarr::ChooseBaseDType;
 using namespace std::chrono_literals;
 
-void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_zarr_dir,
+void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_chunked_dir,
                                                 const std::string& output_root_dir, 
                                                 int base_level_key,
                                                 int min_dim, 
@@ -45,9 +45,9 @@ void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_zarr_di
     int resolution = 1; // this gets doubled in each level up
     tensorstore::Spec input_spec{};
     if (v == VisType::NG_Zarr | v == VisType::Viv){
-      input_spec = GetZarrSpecToRead(input_zarr_dir, std::to_string(base_level_key));
+      input_spec = GetZarrSpecToRead(input_chunked_dir, std::to_string(base_level_key));
     } else if (v == VisType::PCNG){
-      input_spec = GetNPCSpecToRead(input_zarr_dir, std::to_string(base_level_key));
+      input_spec = GetNPCSpecToRead(input_chunked_dir, std::to_string(base_level_key));
     }
 
     TENSORSTORE_CHECK_OK_AND_ASSIGN(auto test_store, tensorstore::Open(
@@ -78,34 +78,34 @@ void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_zarr_di
         resolution *= 2;
         switch(data_type){
           case 1:
-            WriteDownsampledImage<uint8_t>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<uint8_t>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 2:
-            WriteDownsampledImage<uint16_t>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<uint16_t>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 4:
-            WriteDownsampledImage<uint32_t>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<uint32_t>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 8:
-            WriteDownsampledImage<uint64_t>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<uint64_t>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 16:
-            WriteDownsampledImage<int8_t>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<int8_t>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 32:
-            WriteDownsampledImage<int16_t>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<int16_t>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 64:
-            WriteDownsampledImage<int32_t>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<int32_t>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 128:
-            WriteDownsampledImage<int64_t>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<int64_t>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 256:
-            WriteDownsampledImage<float>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<float>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           case 512:
-            WriteDownsampledImage<double>(input_zarr_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
+            WriteDownsampledImage<double>(input_chunked_dir, std::to_string(i), output_root_dir, std::to_string(i+1), resolution, v, channel_ds_config, th_pool);
             break;
           default:
             break;

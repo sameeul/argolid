@@ -1,4 +1,4 @@
-#include "ome_tiff_to_zarr_converter.h"
+#include "ome_tiff_to_chunked_converter.h"
 #include "utilities.h"
 
 #include <string>
@@ -22,7 +22,7 @@
 using ::tensorstore::Context;
 using ::tensorstore::internal_zarr::ChooseBaseDType;
 
-void OmeTiffToZarrConverter::Convert( const std::string& input_file, const std::string& output_file, 
+void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const std::string& output_file, 
                                       const std::string& scale_key, const VisType v, BS::thread_pool& th_pool){
   
   int num_dims, x_dim, y_dim;

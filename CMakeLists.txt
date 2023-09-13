@@ -9,7 +9,7 @@ if(DEFINED ENV{ARGOLID_DEP_DIR})
 	set(CMAKE_PREFIX_PATH $ENV{ARGOLID_DEP_DIR})
 	link_directories($ENV{ARGOLID_DEP_DIR}/lib)
 endif()
-
+message(STATUS "CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH}")
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
   endif()
@@ -20,10 +20,10 @@ set(SOURCE
            src/ts_driver/tiled_tiff/tiled_tiff_key_value_store.cc
            src/ts_driver/ometiff/metadata.cc
            src/ts_driver/ometiff/driver.cc
-           src/ome_tiff_to_zarr_converter.cpp
-           src/zarr_pyramid_assembler.cpp
-           src/zarr_base_to_pyr_gen.cpp
-           src/ome_tiff_to_zarr_pyramid.cpp
+           src/ome_tiff_to_chunked_converter.cpp
+           src/chunked_pyramid_assembler.cpp
+           src/chunked_base_to_pyr_gen.cpp
+           src/ome_tiff_to_chunked_pyramid.cpp
            src/utilities.cpp
 )
 add_executable(test_pyrgen ${SOURCE} tests/main.cpp)

@@ -4,10 +4,10 @@
 #include "BS_thread_pool.hpp"
 #include "utilities.h"
 
-class OmeTiffToZarrConverter{
+class OmeTiffToChunkedConverter{
 
 public:
-    OmeTiffToZarrConverter(){}
+    OmeTiffToChunkedConverter(){}
     void Convert(   const std::string& input_file, 
                     const std::string& output_file,
                     const std::string& scale_key,  

@@ -1,4 +1,4 @@
-#include "../ome_tiff_to_zarr_pyramid.h"
+#include "../ome_tiff_to_chunked_pyramid.h"
 #include "../utilities.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>

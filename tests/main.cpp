@@ -1,9 +1,9 @@
 #include <iostream>
 #include <string>
-#include "../src/ome_tiff_to_zarr_converter.h"
-#include "../src/zarr_pyramid_assembler.h"
-#include "../src/zarr_base_to_pyr_gen.h"
-#include "../src/ome_tiff_to_zarr_pyramid.h"
+#include "../src/ome_tiff_to_chunked_converter.h"
+#include "../src/chunked_pyramid_assembler.h"
+#include "../src/chunked_base_to_pyr_gen.h"
+#include "../src/ome_tiff_to_chunked_pyramid.h"
 #include "../src/utilities.h"
 #include "BS_thread_pool.hpp"
 #include<chrono>
@@ -25,7 +25,7 @@ void test_zarr_pyramid_writer(){
     //input_file = "/home/samee/axle/data/test_image.ome.tif";
     //output_file = "/home/samee/axle/data/test_image_ome_zarr_2";
 
-    auto zpw = OmeTiffToZarrConverter();
+    auto zpw = OmeTiffToChunkedConverter();
     auto t1 = std::chrono::high_resolution_clock::now();
     BS::thread_pool th_pool;
     zpw.Convert(input_file, output_file, "16", VisType::Viv ,th_pool);

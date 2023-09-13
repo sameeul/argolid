@@ -13,10 +13,10 @@ def test_single_image():
     print(f"elapsed time = {end_time - start_time}")
 
 def test_image_collection():
-    input_dir = "/home/samee/axle/data/images"
+    input_dir = "/mnt/hdd8/axle/data/aaron_test_data/"
     file_pattern = "x{x:d+}_y{y:d+}_c{c:d}.ome.tiff"
     print(file_pattern)
-    output_dir = "/home/samee/axle/data/"
+    output_dir = "/mnt/hdd8/axle/data/"
     image_name = "test_image2"
     start_time = time()
     pyr_gen = PyramidGenerartor()

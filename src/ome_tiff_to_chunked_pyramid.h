@@ -4,9 +4,9 @@
 #include <tiffio.h>
 #include <cmath>
 #include <memory>
-#include "ome_tiff_to_zarr_converter.h"
-#include "zarr_pyramid_assembler.h"
-#include "zarr_base_to_pyr_gen.h"
+#include "ome_tiff_to_chunked_converter.h"
+#include "chunked_pyramid_assembler.h"
+#include "chunked_base_to_pyr_gen.h"
 #include "utilities.h"
 #include "BS_thread_pool.hpp"
 #include <plog/Log.h>
@@ -57,9 +57,9 @@ public:
     }
 
 private:
-    std::unique_ptr<OmeTiffToZarrConverter> _zpw_ptr = nullptr;
+    std::unique_ptr<OmeTiffToChunkedConverter> _zpw_ptr = nullptr;
     std::unique_ptr<ChunkedBaseToPyramid> _zpg_ptr = nullptr;
-    std::unique_ptr<OmeTiffCollToChunked> _tiff_coll_to_zarr_ptr = nullptr;
+    std::unique_ptr<OmeTiffCollToChunked> _tiff_coll_to_chunked_ptr = nullptr;
     BS::thread_pool _th_pool;
 
     void WriteMultiscaleMetadataForImageCollection( const std::string& input_file, 
