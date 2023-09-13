@@ -23,3 +23,10 @@ cmake -Dfilepattern_SHARED_LIB=ON -DCMAKE_PREFIX_PATH=../../$LOCAL_INSTALL_DIR -
 make install -j4
 cd ../../
 
+git clone https://github.com/pybind/pybind11.git
+cd pybind11
+mkdir build_man
+cd build_man/
+cmake -DCMAKE_INSTALL_PREFIX=../../$LOCAL_INSTALL_DIR/  -DPYBIND11_TEST=OFF ..
+make install -j4
+cd ../../

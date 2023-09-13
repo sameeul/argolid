@@ -65,9 +65,8 @@ else ()
 	message(STATUS "Unable to find threads. Argolid must have a threading library i.e. pthreads.")
 endif ()
 
-# Python bindings.
-# PyBind
-add_subdirectory(lib/pybind11)
+#==== Pybind11
+find_package(pybind11 CONFIG REQUIRED)
 
 pybind11_add_module(libargolid 
   ${SOURCE}

@@ -30,7 +30,7 @@
 #include "tensorstore/kvstore/kvstore.h"
 #include "tensorstore/open.h"
 
-#include "filepattern.h"
+#include "filepattern/filepattern.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
