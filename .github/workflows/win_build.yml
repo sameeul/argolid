@@ -1,0 +1,40 @@
+name: Build And Run Test on Windows
+
+on:
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+      
+
+  Build_and_Run_PyTest:
+    name: Build and Run PyTest
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - uses: ilammy/msvc-dev-cmd@v1
+      name: Add MSVS Path
+
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: anaconda-client-env
+        python-version: 3.8
+        channels: conda-forge
+        auto-activate-base: false
+
+    - name: Install Conda Dependencies
+      working-directory: ${{github.workspace}}
+      run: |
+        conda install cmake nasm perl
+    - name: Build Library
+      working-directory: ${{github.workspace}}
+      run: CMAKE_ARGS="-DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX" python -m pip install . -vv
