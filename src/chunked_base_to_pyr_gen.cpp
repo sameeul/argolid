@@ -43,12 +43,15 @@ void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_chunked
                                                 BS::thread_pool& th_pool)
 {
     int resolution = 1; // this gets doubled in each level up
-    tensorstore::Spec input_spec{};
-    if (v == VisType::NG_Zarr | v == VisType::Viv){
-      input_spec = GetZarrSpecToRead(input_chunked_dir, std::to_string(base_level_key));
-    } else if (v == VisType::PCNG){
-      input_spec = GetNPCSpecToRead(input_chunked_dir, std::to_string(base_level_key));
-    }
+    auto input_spec = [v, &input_chunked_dir, &base_level_key](){
+      if (v == VisType::NG_Zarr | v == VisType::Viv){
+        return GetZarrSpecToRead(input_chunked_dir, std::to_string(base_level_key));
+      } else if (v == VisType::PCNG){
+        return GetNPCSpecToRead(input_chunked_dir, std::to_string(base_level_key));
+      } else {// this will probably never happen
+        return tensorstore::Spec(); 
+      }
+    }();
 
     TENSORSTORE_CHECK_OK_AND_ASSIGN(auto test_store, tensorstore::Open(
                             input_spec,
@@ -140,12 +143,16 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
         c_dim = 3;
         num_dims = 3;
     }
-    tensorstore::Spec input_spec{};
-    if (v == VisType::NG_Zarr | v == VisType::Viv){
-      input_spec = GetZarrSpecToRead(input_file, input_scale_key);
-    } else if (v == VisType::PCNG){
-      input_spec = GetNPCSpecToRead(input_file, input_scale_key);
-    }
+
+    auto input_spec = [v, &input_file, &input_scale_key](){
+      if (v == VisType::NG_Zarr | v == VisType::Viv){
+        return GetZarrSpecToRead(input_file, input_scale_key);
+      } else if (v == VisType::PCNG){
+        return GetNPCSpecToRead(input_file, input_scale_key);
+      } else {// this will probably never happen
+        return tensorstore::Spec(); 
+      }
+    }();
     //tensorstore::Context context = Context::Default();
     TENSORSTORE_CHECK_OK_AND_ASSIGN(auto store1, tensorstore::Open(
                             input_spec,
@@ -154,8 +161,6 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
     auto prev_image_shape = store1.domain().shape();
     auto read_chunk_shape = store1.chunk_layout().value().read_chunk_shape();
 
-    TENSORSTORE_CHECK_OK_AND_ASSIGN(auto base_zarr_dtype,
-                                        ChooseBaseDType(store1.dtype()));
     auto prev_x_max = static_cast<std::int64_t>(prev_image_shape[x_dim]);
     auto prev_y_max = static_cast<std::int64_t>(prev_image_shape[y_dim]);
 
@@ -175,16 +180,18 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
     auto num_rows = static_cast<std::int64_t>(ceil(1.0*cur_y_max/chunk_shape[y_dim]));
     auto num_cols = static_cast<std::int64_t>(ceil(1.0*cur_x_max/chunk_shape[x_dim]));
 
-    tensorstore::Spec output_spec{};
     auto open_mode = tensorstore::OpenMode::create;
-
-    if (v == VisType::NG_Zarr | v == VisType::Viv){
-      new_image_shape[c_dim] = prev_image_shape[c_dim];
-      output_spec = GetZarrSpecToWrite(output_file + "/" + output_scale_key, new_image_shape, chunk_shape, base_zarr_dtype.encoded_dtype);
-      open_mode = open_mode | tensorstore::OpenMode::delete_existing;
-    } else if (v == VisType::PCNG){
-      output_spec = GetNPCSpecToWrite(output_file, output_scale_key, new_image_shape, chunk_shape, resolution, num_channels, store1.dtype().name(), false);
-    }
+    auto output_spec = [&](){
+      if (v == VisType::NG_Zarr | v == VisType::Viv){
+        new_image_shape[c_dim] = prev_image_shape[c_dim];
+        return GetZarrSpecToWrite(output_file + "/" + output_scale_key, new_image_shape, chunk_shape, ChooseBaseDType(store1.dtype()).value().encoded_dtype);
+        open_mode = open_mode | tensorstore::OpenMode::delete_existing;
+      } else if (v == VisType::PCNG){
+        return GetNPCSpecToWrite(output_file, output_scale_key, new_image_shape, chunk_shape, resolution, num_channels, store1.dtype().name(), false);
+      } else {
+        return tensorstore::Spec();
+      }
+    }();  
     
     TENSORSTORE_CHECK_OK_AND_ASSIGN(auto store2, tensorstore::Open(
                             output_spec,

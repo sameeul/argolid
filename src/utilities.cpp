@@ -18,9 +18,9 @@ tensorstore::Spec GetOmeTiffSpecToRead(const std::string& filename){
 }
 
 tensorstore::Spec GetZarrSpecToWrite(   const std::string& filename, 
-                                        std::vector<std::int64_t>& image_shape, 
-                                        std::vector<std::int64_t>& chunk_shape,
-                                        std::string& dtype){
+                                        const std::vector<std::int64_t>& image_shape, 
+                                        const std::vector<std::int64_t>& chunk_shape,
+                                        const std::string& dtype){
     return tensorstore::Spec::FromJson({{"driver", "zarr"},
                             {"kvstore", {{"driver", "file"},
                                          {"path", filename}}
