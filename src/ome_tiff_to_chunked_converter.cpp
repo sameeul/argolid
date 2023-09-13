@@ -48,8 +48,7 @@ void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const st
   auto shape = store1.domain().shape();
   auto read_chunk_shape = store1.chunk_layout().value().read_chunk_shape();
   auto data_type = GetDataTypeCode(store1.dtype().name()); 
-  TENSORSTORE_CHECK_OK_AND_ASSIGN(auto base_zarr_dtype,
-                                     ChooseBaseDType(store1.dtype()));
+
   std::int64_t image_length = shape[3]; // as per tiled_tiff spec
   std::int64_t image_width = shape[4];
   std::vector<std::int64_t> new_image_shape(num_dims,1);
@@ -62,13 +61,15 @@ void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const st
   auto num_rows = static_cast<std::int64_t>(ceil(1.0*image_length/chunk_shape[y_dim]));
   auto num_cols = static_cast<std::int64_t>(ceil(1.0*image_width/chunk_shape[x_dim]));
 
-  tensorstore::Spec output_spec{};
-  
-  if (v == VisType::NG_Zarr | v == VisType::Viv){
-    output_spec = GetZarrSpecToWrite(output_file + "/" + scale_key, new_image_shape, chunk_shape, base_zarr_dtype.encoded_dtype);
-  } else if (v == VisType::PCNG){
-    output_spec = GetNPCSpecToWrite(output_file, scale_key, new_image_shape, chunk_shape, 1, 1, store1.dtype().name(), true);
-  }
+  auto output_spec = [&](){
+    if (v == VisType::NG_Zarr | v == VisType::Viv){
+      return GetZarrSpecToWrite(output_file + "/" + scale_key, new_image_shape, chunk_shape, ChooseBaseDType(store1.dtype()).value().encoded_dtype);
+    } else if (v == VisType::PCNG){
+      return GetNPCSpecToWrite(output_file, scale_key, new_image_shape, chunk_shape, 1, 1, store1.dtype().name(), true);
+    } else {
+      return tensorstore::Spec();
+    }
+  }(); 
 
   TENSORSTORE_CHECK_OK_AND_ASSIGN(auto store2, tensorstore::Open(
                             output_spec,

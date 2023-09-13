@@ -116,11 +116,6 @@ void OmeTiffCollToChunked::Assemble(const std::string& input_dir,
     _full_image_width = (grid_x_max+1)*_chunk_size_x;
     _full_image_height = (grid_y_max+1)*_chunk_size_y;
     _num_channels = grid_c_max+1;
-
-    TENSORSTORE_CHECK_OK_AND_ASSIGN(auto base_zarr_dtype,
-                                        ChooseBaseDType(test_source.dtype()));
-    
-    tensorstore::Spec output_spec{};
     
     std::vector<std::int64_t> new_image_shape(num_dims,1);
     std::vector<std::int64_t> chunk_shape(num_dims,1);
@@ -129,13 +124,16 @@ void OmeTiffCollToChunked::Assemble(const std::string& input_dir,
     chunk_shape[y_dim] = _chunk_size_y;
     chunk_shape[x_dim] = _chunk_size_x;
     _data_type_string = test_source.dtype().name();
-    if (v == VisType::NG_Zarr || v == VisType::Viv){
-      new_image_shape[c_dim] = _num_channels;
-      output_spec = GetZarrSpecToWrite(output_file + "/" + scale_key, new_image_shape, chunk_shape, base_zarr_dtype.encoded_dtype);
-    }  else if (v == VisType::PCNG){
-      output_spec = GetNPCSpecToWrite(output_file, scale_key, new_image_shape, chunk_shape, 1, _num_channels, test_source.dtype().name(), true);
-    }
-
+    auto output_spec = [&](){
+      if (v == VisType::NG_Zarr || v == VisType::Viv){
+        new_image_shape[c_dim] = _num_channels;
+        return GetZarrSpecToWrite(output_file + "/" + scale_key, new_image_shape, chunk_shape, ChooseBaseDType(test_source.dtype()).value().encoded_dtype);
+      }  else if (v == VisType::PCNG){
+        return GetNPCSpecToWrite(output_file, scale_key, new_image_shape, chunk_shape, 1, _num_channels, test_source.dtype().name(), true);
+      } else {
+        return tensorstore::Spec();
+      }
+    }();
     TENSORSTORE_CHECK_OK_AND_ASSIGN(auto dest, tensorstore::Open(
                                 output_spec,
                                 tensorstore::OpenMode::create |
