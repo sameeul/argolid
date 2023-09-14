@@ -25,35 +25,9 @@ public:
                                 const std::string& image_name, const std::string& output_dir, 
                                 int min_dim, VisType v, std::unordered_map<std::int64_t, DSType>& channel_ds_config);
     void SetLogLevel(int level){
-        switch (level)
-        {
-        case 0:
-            plog::get()->setMaxSeverity(plog::none);
-            break;
-        case 1:
-            plog::get()->setMaxSeverity(plog::fatal);
-            break;
-        case 2:
-            plog::get()->setMaxSeverity(plog::error);
-            break;       
-        case 3:
-            plog::get()->setMaxSeverity(plog::warning);
-            break;
-        case 4:
-            plog::get()->setMaxSeverity(plog::info);
-            break;
-        case 5:
-            plog::get()->setMaxSeverity(plog::debug);
-            break;
-        case 6:
-            plog::get()->setMaxSeverity(plog::verbose);
-            break;
-        default:
-            plog::get()->setMaxSeverity(plog::none);
-            break;
+        if (level>=0 && level<=6) {
+            plog::get()->setMaxSeverity(plog::Severity(level));
         }
-        
-            
     }
 
 private:
@@ -65,7 +39,7 @@ private:
     void WriteMultiscaleMetadataForImageCollection( const std::string& input_file, 
                                                     const std::string& output_dir,
                                                     int min_level, int max_level,
-                                                    VisType v);
+                                                    VisType v, ImageInfo& whole_image);
     void WriteMultiscaleMetadataForSingleFile(  const std::string& input_file, 
                                                 const std::string& output_dir,
                                                 int min_level, int max_level,

@@ -55,13 +55,13 @@ void OmeTiffToChunkedPyramid::WriteMultiscaleMetadataForSingleFile( const std::s
 
 
 void OmeTiffToChunkedPyramid::WriteMultiscaleMetadataForImageCollection(const std::string& image_file_name , const std::string& output_dir, 
-                                                                        int min_level, int max_level, VisType v)
+                                                                        int min_level, int max_level, VisType v, ImageInfo& whole_image)
 {
     std::string chunked_file_dir = output_dir + "/" + image_file_name + ".zarr";
     if(v == VisType::NG_Zarr){
         WriteTSZattrFile(image_file_name, chunked_file_dir, min_level, max_level);
     } else if (v == VisType::Viv){
-        _tiff_coll_to_chunked_ptr->GenerateOmeXML(image_file_name, chunked_file_dir+"/METADATA.ome.xml");                   
+        _tiff_coll_to_chunked_ptr->GenerateOmeXML(image_file_name, chunked_file_dir+"/METADATA.ome.xml", whole_image);                   
         WriteVivZattrFile(image_file_name, chunked_file_dir+"/data.zarr/0/", min_level, max_level);
         WriteVivZgroupFiles(chunked_file_dir);
     }
@@ -183,14 +183,13 @@ void OmeTiffToChunkedPyramid::GenerateFromCollection(
 
     int base_level_key = 0;
     PLOG_INFO << "Assembling base image...";
-    _tiff_coll_to_chunked_ptr->Assemble(collection_path, stitch_vector_file, chunked_file_dir, std::to_string(base_level_key), v, _th_pool);
-    int max_level = static_cast<int>(ceil(log2(std::max({  _tiff_coll_to_chunked_ptr->image_width(), 
-                                                        _tiff_coll_to_chunked_ptr->image_height()}))));
+    auto whole_image =_tiff_coll_to_chunked_ptr->Assemble(collection_path, stitch_vector_file, chunked_file_dir, std::to_string(base_level_key), v, _th_pool);
+    int max_level = static_cast<int>(ceil(log2(std::max({whole_image._full_image_width, whole_image._full_image_width}))));
     int min_level = static_cast<int>(ceil(log2(min_dim)));
     auto max_level_key = max_level-min_level+1+base_level_key;
     PLOG_INFO << "Generating image pyramids...";
     _zpg_ptr = std::make_unique<ChunkedBaseToPyramid>();
     _zpg_ptr->CreatePyramidImages(chunked_file_dir, chunked_file_dir,base_level_key, min_dim, v, channel_ds_config, _th_pool);
     PLOG_INFO << "Writing metadata...";
-    WriteMultiscaleMetadataForImageCollection(image_name, output_dir, base_level_key, max_level_key, v);
+    WriteMultiscaleMetadataForImageCollection(image_name, output_dir, base_level_key, max_level_key, v, whole_image);
 }

@@ -51,8 +51,7 @@ std::int64_t retrieve_val(const std::string& var, const Map& m){
 }
 
 
-
-void OmeTiffCollToChunked::Assemble(const std::string& input_dir,
+ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
                                     const std::string& pattern ,
                                     const std::string& output_file, 
                                     const std::string& scale_key, 
@@ -61,10 +60,11 @@ void OmeTiffCollToChunked::Assemble(const std::string& input_dir,
 {
   int grid_x_max = 0, grid_y_max = 0, grid_c_max = 0;
   std::vector<ImageSegment> image_vec;
-  _chunk_size_x = 0;
-  _chunk_size_y = 0;
-  _full_image_width = 0;
-  _full_image_height = 0;
+  ImageInfo whole_image;
+  whole_image._chunk_size_x = 0;
+  whole_image._chunk_size_y = 0;
+  whole_image._full_image_width = 0;
+  whole_image._full_image_height = 0;
 
   auto fp = std::make_unique<FilePattern> (input_dir, pattern);
   auto files = fp->getFiles();
@@ -111,25 +111,26 @@ void OmeTiffCollToChunked::Assemble(const std::string& input_dir,
                     tensorstore::OpenMode::open,
                     tensorstore::ReadWriteMode::read).result());
     auto test_image_shape = test_source.domain().shape();
-    _chunk_size_x = test_image_shape[4];
-    _chunk_size_y = test_image_shape[3];
-    _full_image_width = (grid_x_max+1)*_chunk_size_x;
-    _full_image_height = (grid_y_max+1)*_chunk_size_y;
-    _num_channels = grid_c_max+1;
+    whole_image._chunk_size_x = test_image_shape[4];
+    whole_image._chunk_size_y = test_image_shape[3];
+    whole_image._full_image_width = (grid_x_max+1)*whole_image._chunk_size_x;
+    whole_image._full_image_height = (grid_y_max+1)*whole_image._chunk_size_y;
+    whole_image._num_channels = grid_c_max+1;
     
     std::vector<std::int64_t> new_image_shape(num_dims,1);
     std::vector<std::int64_t> chunk_shape(num_dims,1);
-    new_image_shape[y_dim] = _full_image_height;
-    new_image_shape[x_dim] = _full_image_width;
-    chunk_shape[y_dim] = _chunk_size_y;
-    chunk_shape[x_dim] = _chunk_size_x;
-    _data_type_string = test_source.dtype().name();
+    new_image_shape[y_dim] = whole_image._full_image_height;
+    new_image_shape[x_dim] = whole_image._full_image_width;
+    chunk_shape[y_dim] = whole_image._chunk_size_y;
+    chunk_shape[x_dim] = whole_image._chunk_size_x;
+    whole_image._data_type = test_source.dtype().name();
+
     auto output_spec = [&](){
       if (v == VisType::NG_Zarr || v == VisType::Viv){
-        new_image_shape[c_dim] = _num_channels;
+        new_image_shape[c_dim] = whole_image._num_channels;
         return GetZarrSpecToWrite(output_file + "/" + scale_key, new_image_shape, chunk_shape, ChooseBaseDType(test_source.dtype()).value().encoded_dtype);
       }  else if (v == VisType::PCNG){
-        return GetNPCSpecToWrite(output_file, scale_key, new_image_shape, chunk_shape, 1, _num_channels, test_source.dtype().name(), true);
+        return GetNPCSpecToWrite(output_file, scale_key, new_image_shape, chunk_shape, 1, whole_image._num_channels, test_source.dtype().name(), true);
       } else {
         return tensorstore::Spec();
       }
@@ -142,7 +143,7 @@ void OmeTiffCollToChunked::Assemble(const std::string& input_dir,
     
     auto t4 = std::chrono::high_resolution_clock::now();
     for(const auto& i: image_vec){        
-      th_pool.push_task([&dest, i, x_dim, y_dim, c_dim, this, v](){
+      th_pool.push_task([&dest, i, x_dim, y_dim, c_dim, v, &whole_image](){
 
 
         TENSORSTORE_CHECK_OK_AND_ASSIGN(auto source, tensorstore::Open(
@@ -165,18 +166,18 @@ void OmeTiffCollToChunked::Assemble(const std::string& input_dir,
         tensorstore::IndexTransform<> transform = tensorstore::IdentityTransform(dest.domain());
         if(v == VisType::PCNG){
           transform = (std::move(transform) | tensorstore::Dims("z", "channel").IndexSlice({0, i._c_grid}) 
-                                            | tensorstore::Dims(y_dim).SizedInterval(i._y_grid*this->_chunk_size_y, image_height) 
-                                            | tensorstore::Dims(x_dim).SizedInterval(i._x_grid*this->_chunk_size_x, image_width)
+                                            | tensorstore::Dims(y_dim).SizedInterval(i._y_grid*whole_image._chunk_size_y, image_height) 
+                                            | tensorstore::Dims(x_dim).SizedInterval(i._x_grid*whole_image._chunk_size_x, image_width)
                                             | tensorstore::Dims(x_dim, y_dim).Transpose({y_dim, x_dim})).value();
 
         } else if (v == VisType::NG_Zarr){
           transform = (std::move(transform) | tensorstore::Dims(c_dim).SizedInterval(i._c_grid, 1) 
-                                            | tensorstore::Dims(y_dim).SizedInterval(i._y_grid*this->_chunk_size_y, image_height) 
-                                            | tensorstore::Dims(x_dim).SizedInterval(i._x_grid*this->_chunk_size_x, image_width)).value();
+                                            | tensorstore::Dims(y_dim).SizedInterval(i._y_grid*whole_image._chunk_size_y, image_height) 
+                                            | tensorstore::Dims(x_dim).SizedInterval(i._x_grid*whole_image._chunk_size_x, image_width)).value();
         } else if (v == VisType::Viv){
           transform = (std::move(transform) | tensorstore::Dims(c_dim).SizedInterval(i._c_grid, 1) 
-                                            | tensorstore::Dims(y_dim).SizedInterval(i._y_grid*this->_chunk_size_y, image_height) 
-                                            | tensorstore::Dims(x_dim).SizedInterval(i._x_grid*this->_chunk_size_x, image_width)).value();
+                                            | tensorstore::Dims(y_dim).SizedInterval(i._y_grid*whole_image._chunk_size_y, image_height) 
+                                            | tensorstore::Dims(x_dim).SizedInterval(i._x_grid*whole_image._chunk_size_x, image_width)).value();
         }
         tensorstore::Write(array, dest | transform).value();
       });
@@ -184,9 +185,10 @@ void OmeTiffCollToChunked::Assemble(const std::string& input_dir,
 
     th_pool.wait_for_tasks();
   }
+  return std::move(whole_image);
 }
 
-void OmeTiffCollToChunked::GenerateOmeXML(const std::string& image_name, const std::string& output_file){
+void OmeTiffCollToChunked::GenerateOmeXML(const std::string& image_name, const std::string& output_file, ImageInfo& whole_image){
 
     pugi::xml_document doc;
 
@@ -211,15 +213,15 @@ void OmeTiffCollToChunked::GenerateOmeXML(const std::string& image_name, const s
     pixelsNode.append_attribute("DimensionOrder") = "XYZCT";
     pixelsNode.append_attribute("ID") = "Pixels:0";
     pixelsNode.append_attribute("Interleaved") = "false";
-    pixelsNode.append_attribute("SizeC") = std::to_string(_num_channels).c_str();;
+    pixelsNode.append_attribute("SizeC") = std::to_string(whole_image._num_channels).c_str();;
     pixelsNode.append_attribute("SizeT") = "1";
-    pixelsNode.append_attribute("SizeX") = std::to_string(_full_image_width).c_str();
-    pixelsNode.append_attribute("SizeY") = std::to_string(_full_image_height).c_str();
+    pixelsNode.append_attribute("SizeX") = std::to_string(whole_image._full_image_width).c_str();
+    pixelsNode.append_attribute("SizeY") = std::to_string(whole_image._full_image_height).c_str();
     pixelsNode.append_attribute("SizeZ") = "1";
-    pixelsNode.append_attribute("Type") = _data_type_string.c_str();
+    pixelsNode.append_attribute("Type") = whole_image._data_type.c_str();
 
     // Create the <Channel> elements
-    for(std::int64_t i=0; i<_num_channels; ++i){
+    for(std::int64_t i=0; i<whole_image._num_channels; ++i){
       pugi::xml_node channelNode = pixelsNode.append_child("Channel");
       channelNode.append_attribute("ID") = ("Channel:0:" + std::to_string(i)).c_str();
       channelNode.append_attribute("SamplesPerPixel") = "1";
