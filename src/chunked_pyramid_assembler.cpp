@@ -124,10 +124,12 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
     chunk_shape[y_dim] = whole_image._chunk_size_y;
     chunk_shape[x_dim] = whole_image._chunk_size_x;
     whole_image._data_type = test_source.dtype().name();
+    if (v == VisType::NG_Zarr || v == VisType::Viv){
+      new_image_shape[c_dim] = whole_image._num_channels;
+    }
 
     auto output_spec = [&](){
       if (v == VisType::NG_Zarr || v == VisType::Viv){
-        new_image_shape[c_dim] = whole_image._num_channels;
         return GetZarrSpecToWrite(output_file + "/" + scale_key, new_image_shape, chunk_shape, ChooseBaseDType(test_source.dtype()).value().encoded_dtype);
       }  else if (v == VisType::PCNG){
         return GetNPCSpecToWrite(output_file, scale_key, new_image_shape, chunk_shape, 1, whole_image._num_channels, test_source.dtype().name(), true);
