@@ -26,7 +26,7 @@ class OmeTiffCollToChunked{
 
 public:
 
-    OmeTiffCollToChunked(){};
+    OmeTiffCollToChunked() = default;
 
     ImageInfo Assemble(const std::string& input_dir,
                   const std::string& pattern,

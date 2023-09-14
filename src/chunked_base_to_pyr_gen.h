@@ -7,7 +7,7 @@
 class ChunkedBaseToPyramid{
 
 public:
-    ChunkedBaseToPyramid(){}
+    ChunkedBaseToPyramid() = default;
     void CreatePyramidImages(   const std::string& input_chunked_dir,
                                 const std::string& output_root_dir, 
                                 int base_scale_key,

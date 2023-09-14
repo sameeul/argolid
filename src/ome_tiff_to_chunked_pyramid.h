@@ -31,9 +31,9 @@ public:
     }
 
 private:
-    std::unique_ptr<OmeTiffToChunkedConverter> _zpw_ptr = nullptr;
-    std::unique_ptr<ChunkedBaseToPyramid> _zpg_ptr = nullptr;
-    std::unique_ptr<OmeTiffCollToChunked> _tiff_coll_to_chunked_ptr = nullptr;
+    OmeTiffToChunkedConverter _tiff_to_chunk;
+    ChunkedBaseToPyramid _base_to_pyramid;
+    OmeTiffCollToChunked _tiff_coll_to_chunk;
     BS::thread_pool _th_pool;
 
     void WriteMultiscaleMetadataForImageCollection( const std::string& input_file, 
