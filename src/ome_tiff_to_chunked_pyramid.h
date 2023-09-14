@@ -15,7 +15,7 @@
 class OmeTiffToChunkedPyramid{
 public:
     OmeTiffToChunkedPyramid(){
-        auto log_file_name = ::GetUTCString() + ".txt";
+        auto log_file_name = "argolid_" + ::GetUTCString() + ".log";
         plog::init(plog::none, log_file_name.c_str());
 
     }
