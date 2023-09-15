@@ -21,6 +21,7 @@
 #include <cmath>
 #include <thread>
 #include <cstdlib>
+#include <optional>
 
 #include "tensorstore/tensorstore.h"
 #include "tensorstore/context.h"
@@ -42,12 +43,16 @@ using ::tensorstore::Context;
 using ::tensorstore::internal_zarr::ChooseBaseDType;
 
 namespace argolid{
-std::int64_t retrieve_val(const std::string& var, const Map& m){
+std::optional<std::int64_t> retrieve_val(const std::string& var, const Map& m){
     auto it = m.find(var);
     if(it != m.end()){
-        return static_cast<std::int64_t>(std::get<int>(it->second));
+        if (std::holds_alternative<int>(it->second)){
+          return static_cast<std::int64_t>(std::get<int>(it->second));
+        } else {
+          return {};
+        }   
     } else {
-        return 0;
+        return {};
     }
 }
 
@@ -71,14 +76,17 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
   auto files = fp->getFiles();
 
   for(const auto& [map, values]: files){
-    auto gc = retrieve_val("c", map);
     auto gx = retrieve_val("x", map);
     auto gy = retrieve_val("y", map);
-    auto fname = values[0].string();  
-    gc > grid_c_max ? grid_c_max = gc : grid_c_max = grid_c_max;
-    gx > grid_x_max ? grid_x_max = gx : grid_x_max = grid_x_max;
-    gy > grid_y_max ? grid_y_max = gy : grid_y_max = grid_y_max;
-    image_vec.emplace_back(fname, gx, gy, gc);   
+    if(gx.has_value() && gy.has_value()){
+      auto gc = retrieve_val("c", map);
+      if(!gc.has_value()) gc.emplace(0); // use default channel 0
+      auto fname = values[0].string();  
+      gc.value() > grid_c_max ? grid_c_max = gc.value() : grid_c_max = grid_c_max;
+      gx.value() > grid_x_max ? grid_x_max = gx.value() : grid_x_max = grid_x_max;
+      gy.value() > grid_y_max ? grid_y_max = gy.value() : grid_y_max = grid_y_max;
+      image_vec.emplace_back(fname, gx.value(), gy.value(), gc.value());   
+    }
   }
   PLOG_INFO << "Total images found: " << image_vec.size() <<std::endl;
   auto t1 = std::chrono::high_resolution_clock::now();
