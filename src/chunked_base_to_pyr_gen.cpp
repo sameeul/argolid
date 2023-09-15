@@ -34,6 +34,7 @@ using ::tensorstore::Context;
 using ::tensorstore::internal_zarr::ChooseBaseDType;
 using namespace std::chrono_literals;
 
+namespace argolid{
 void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_chunked_dir,
                                                 const std::string& output_root_dir, 
                                                 int base_level_key,
@@ -272,3 +273,4 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
     }
     th_pool.wait_for_tasks();
 }
+} // ns argolid

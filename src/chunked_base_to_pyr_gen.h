@@ -4,8 +4,8 @@
 #include "BS_thread_pool.hpp"
 #include "utilities.h"
 
+namespace argolid{
 class ChunkedBaseToPyramid{
-
 public:
     ChunkedBaseToPyramid() = default;
     void CreatePyramidImages(   const std::string& input_chunked_dir,
@@ -24,4 +24,4 @@ private:
                                 std::unordered_map<std::int64_t, DSType>& channel_ds_config, 
                                 BS::thread_pool& th_pool);
 };
-
+} // ns argolid

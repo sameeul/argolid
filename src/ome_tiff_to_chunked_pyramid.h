@@ -11,11 +11,11 @@
 #include "BS_thread_pool.hpp"
 #include <plog/Log.h>
 #include "plog/Initializers/RollingFileInitializer.h"
-
+namespace argolid {
 class OmeTiffToChunkedPyramid{
 public:
     OmeTiffToChunkedPyramid(){
-        auto log_file_name = "argolid_" + ::GetUTCString() + ".log";
+        auto log_file_name = "argolid_" + ::argolid::GetUTCString() + ".log";
         plog::init(plog::none, log_file_name.c_str());
 
     }
@@ -50,3 +50,4 @@ private:
     void WriteVivZgroupFiles(const std::string& output_dir);
      
 };
+} // ns argolid

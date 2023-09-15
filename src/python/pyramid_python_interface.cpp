@@ -5,21 +5,21 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(libargolid, m) {
-    py::class_<OmeTiffToChunkedPyramid, std::shared_ptr<OmeTiffToChunkedPyramid>>(m, "OmeTiffToChunkedPyramidCPP") \
+    py::class_<argolid::OmeTiffToChunkedPyramid, std::shared_ptr<argolid::OmeTiffToChunkedPyramid>>(m, "OmeTiffToChunkedPyramidCPP") \
     .def(py::init<>()) \
-    .def("GenerateFromSingleFile", &OmeTiffToChunkedPyramid::GenerateFromSingleFile) \
-    .def("GenerateFromCollection", &OmeTiffToChunkedPyramid::GenerateFromCollection) \
-    .def("SetLogLevel", &OmeTiffToChunkedPyramid::SetLogLevel) ;
+    .def("GenerateFromSingleFile", &argolid::OmeTiffToChunkedPyramid::GenerateFromSingleFile) \
+    .def("GenerateFromCollection", &argolid::OmeTiffToChunkedPyramid::GenerateFromCollection) \
+    .def("SetLogLevel", &argolid::OmeTiffToChunkedPyramid::SetLogLevel) ;
 
-    py::enum_<VisType>(m, "VisType")
-        .value("NG_Zarr", VisType::NG_Zarr)
-        .value("PCNG", VisType::PCNG)
-        .value("Viv", VisType::Viv)
+    py::enum_<argolid::VisType>(m, "VisType")
+        .value("NG_Zarr", argolid::VisType::NG_Zarr)
+        .value("PCNG", argolid::VisType::PCNG)
+        .value("Viv", argolid::VisType::Viv)
         .export_values();
 
-    py::enum_<DSType>(m, "DSType")
-        .value("Mode_Max", DSType::Mode_Max)
-        .value("Mode_Min", DSType::Mode_Min)
-        .value("Mean", DSType::Mean)
+    py::enum_<argolid::DSType>(m, "DSType")
+        .value("Mode_Max", argolid::DSType::Mode_Max)
+        .value("Mode_Min", argolid::DSType::Mode_Min)
+        .value("Mean", argolid::DSType::Mean)
         .export_values();
 }

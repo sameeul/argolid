@@ -7,6 +7,7 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
+namespace argolid {
 void OmeTiffToChunkedPyramid::GenerateFromSingleFile(  const std::string& input_file,
                                                     const std::string& output_dir, 
                                                     int min_dim, VisType v, std::unordered_map<std::int64_t, DSType>& channel_ds_config){
@@ -189,3 +190,4 @@ void OmeTiffToChunkedPyramid::GenerateFromCollection(
     PLOG_INFO << "Writing metadata...";
     WriteMultiscaleMetadataForImageCollection(image_name, output_dir, base_level_key, max_level_key, v, whole_image);
 }
+} // ns argolid

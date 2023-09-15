@@ -4,6 +4,7 @@
 #include "utilities.h"
 #include "BS_thread_pool.hpp"
 
+namespace argolid{
 struct ImageSegment{
   std::string file_name;
   std::int64_t _x_grid, _y_grid, _c_grid;
@@ -36,4 +37,4 @@ public:
                   BS::thread_pool& th_pool);
     void GenerateOmeXML(const std::string& image_name, const std::string& output_file, ImageInfo& whole_image);
 };
-
+} // ns argolid

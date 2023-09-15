@@ -3,7 +3,7 @@
 #include <string>
 #include "BS_thread_pool.hpp"
 #include "utilities.h"
-
+namespace argolid {
 class OmeTiffToChunkedConverter{
 
 public:
@@ -15,4 +15,4 @@ public:
                     BS::thread_pool& th_pool
                 );
 };
-
+} // ns argolid

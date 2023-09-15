@@ -16,7 +16,7 @@
 #include "tensorstore/index_space/dim_expression.h"
 #include "tensorstore/kvstore/kvstore.h"
 #include "tensorstore/open.h"
-
+using namespace argolid;
 
 void test_zarr_pyramid_writer(){
     std::string input_file = "/home/samee/Downloads/WT_Uninfected_top_right.tif";

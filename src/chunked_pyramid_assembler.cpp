@@ -41,6 +41,7 @@ namespace fs = std::filesystem;
 using ::tensorstore::Context;
 using ::tensorstore::internal_zarr::ChooseBaseDType;
 
+namespace argolid{
 std::int64_t retrieve_val(const std::string& var, const Map& m){
     auto it = m.find(var);
     if(it != m.end()){
@@ -233,3 +234,4 @@ void OmeTiffCollToChunked::GenerateOmeXML(const std::string& image_name, const s
   
     doc.save_file(output_file.c_str());
 }
+} // ns argolid

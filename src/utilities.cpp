@@ -3,6 +3,7 @@
 #include <chrono>
 #include "utilities.h"
 
+namespace argolid {
 tensorstore::Spec GetOmeTiffSpecToRead(const std::string& filename){
     return tensorstore::Spec::FromJson({{"driver", "ometiff"},
 
@@ -149,3 +150,4 @@ std::string GetUTCString() {
 
     return std::string(buffer);
 }
+} // ns argolid

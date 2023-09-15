@@ -7,15 +7,10 @@
 #include "tensorstore/tensorstore.h"
 #include "tensorstore/spec.h"
 
+namespace argolid {
 enum VisType {Viv, NG_Zarr, PCNG};
 
 enum class DSType {Mean, Mode_Max, Mode_Min};
-
-struct Point {
-    std::int64_t x, y;
-    Point(std::int64_t x, std::int64_t y): 
-    x(x), y(y){}
-};
 
 tensorstore::Spec GetOmeTiffSpecToRead(const std::string& filename);
 tensorstore::Spec GetZarrSpecToRead(const std::string& filename, const std::string& scale_key);
@@ -36,3 +31,4 @@ tensorstore::Spec GetNPCSpecToWrite(const std::string& filename,
 
 uint16_t GetDataTypeCode (std::string_view type_name);
 std::string GetUTCString();
+} // ns argolid
