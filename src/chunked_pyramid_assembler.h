@@ -4,6 +4,7 @@
 #include "utilities.h"
 #include "BS_thread_pool.hpp"
 
+namespace argolid{
 struct ImageSegment{
   std::string file_name;
   std::int64_t _x_grid, _y_grid, _c_grid;
@@ -16,25 +17,24 @@ struct ImageSegment{
 
 };
 
+struct ImageInfo
+{
+  std::int64_t _full_image_height, _full_image_width, _chunk_size_x, _chunk_size_y, _num_channels;
+  std::string _data_type;
+};
+
 class OmeTiffCollToChunked{
 
 public:
 
-    OmeTiffCollToChunked(){};
+    OmeTiffCollToChunked() = default;
 
-    void Assemble(const std::string& input_dir,
+    ImageInfo Assemble(const std::string& input_dir,
                   const std::string& pattern,
                   const std::string& output_file, 
                   const std::string& scale_key, 
                   VisType v, 
                   BS::thread_pool& th_pool);
-    std::int64_t image_height() {return _full_image_height;}
-    std::int64_t image_width() {return _full_image_width;}
-    void GenerateOmeXML(const std::string& image_name, const std::string& output_file);
-    void Reset();
-
-private:
-    std::int64_t _full_image_height, _full_image_width, _chunk_size_x, _chunk_size_y, _num_channels;
-    std::string _data_type_string;
+    void GenerateOmeXML(const std::string& image_name, const std::string& output_file, ImageInfo& whole_image);
 };
-
+} // ns argolid

@@ -16,7 +16,7 @@
 #include "tensorstore/index_space/dim_expression.h"
 #include "tensorstore/kvstore/kvstore.h"
 #include "tensorstore/open.h"
-
+using namespace argolid;
 
 void test_zarr_pyramid_writer(){
     std::string input_file = "/home/samee/Downloads/WT_Uninfected_top_right.tif";
@@ -102,7 +102,8 @@ void test_ome_tiff_coll_to_zarr_pyramid_gen_xml(){
     auto t1 = std::chrono::high_resolution_clock::now();
     BS::thread_pool th_pool;
     //zpw.Assemble(input_dir, stitch_vector,output_file, VisType::Viv, th_pool);
-    zpw.GenerateOmeXML(image_name, output_file);
+    ImageInfo a;
+    zpw.GenerateOmeXML(image_name, output_file, a);
 
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> et1 = t2-t1;

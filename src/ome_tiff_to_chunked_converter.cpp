@@ -22,6 +22,7 @@
 using ::tensorstore::Context;
 using ::tensorstore::internal_zarr::ChooseBaseDType;
 
+namespace argolid {
 void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const std::string& output_file, 
                                       const std::string& scale_key, const VisType v, BS::thread_pool& th_pool){
   
@@ -110,5 +111,5 @@ void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const st
   }
   th_pool.wait_for_tasks();
 }
-
+} // ns argolid
 

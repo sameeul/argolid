@@ -3,6 +3,7 @@
 #include<vector>
 #include<memory>
 #include<cmath>
+namespace argolid {
 // helper function to downsample as an average
 template <typename T>
 std::unique_ptr<std::vector<T>>DownsampleAverage(std::vector<T>& source_array, std::int64_t row, std::int64_t col) {
@@ -208,3 +209,4 @@ std::unique_ptr<std::vector<T>>DownsampleModeMax(std::vector<T>& source_array, s
 
   return result_data;
 }
+} // ns argolid

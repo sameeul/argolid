@@ -34,6 +34,7 @@ using ::tensorstore::Context;
 using ::tensorstore::internal_zarr::ChooseBaseDType;
 using namespace std::chrono_literals;
 
+namespace argolid{
 void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_chunked_dir,
                                                 const std::string& output_root_dir, 
                                                 int base_level_key,
@@ -181,11 +182,14 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
     auto num_cols = static_cast<std::int64_t>(ceil(1.0*cur_x_max/chunk_shape[x_dim]));
 
     auto open_mode = tensorstore::OpenMode::create;
+    if (v == VisType::NG_Zarr | v == VisType::Viv){
+        new_image_shape[c_dim] = prev_image_shape[c_dim];
+        open_mode = open_mode | tensorstore::OpenMode::delete_existing;
+    }
+
     auto output_spec = [&](){
       if (v == VisType::NG_Zarr | v == VisType::Viv){
-        new_image_shape[c_dim] = prev_image_shape[c_dim];
         return GetZarrSpecToWrite(output_file + "/" + output_scale_key, new_image_shape, chunk_shape, ChooseBaseDType(store1.dtype()).value().encoded_dtype);
-        open_mode = open_mode | tensorstore::OpenMode::delete_existing;
       } else if (v == VisType::PCNG){
         return GetNPCSpecToWrite(output_file, output_scale_key, new_image_shape, chunk_shape, resolution, num_channels, store1.dtype().name(), false);
       } else {
@@ -269,3 +273,4 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
     }
     th_pool.wait_for_tasks();
 }
+} // ns argolid
