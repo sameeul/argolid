@@ -67,10 +67,6 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
   int grid_x_max = 0, grid_y_max = 0, grid_c_max = 0;
   std::vector<ImageSegment> image_vec;
   ImageInfo whole_image;
-  whole_image._chunk_size_x = 0;
-  whole_image._chunk_size_y = 0;
-  whole_image._full_image_width = 0;
-  whole_image._full_image_height = 0;
 
   auto fp = std::make_unique<FilePattern> (input_dir, pattern);
   auto files = fp->getFiles();
