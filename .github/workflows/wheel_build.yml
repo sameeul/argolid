@@ -49,7 +49,7 @@ jobs:
                           bash ci-utils/install_prereq_linux.sh &&
                           mkdir -p /tmp/argolid_bld &&
                           cp -r local_install /tmp/argolid_bld
-          CIBW_BEFORE_ALL_LINUX: sudo dnf -y install nasm && 
+          CIBW_BEFORE_ALL_LINUX: yum -y install nasm && 
                                    bash ci-utils/install_prereq_linux.sh &&
                                    mkdir -p /tmp/argolid_bld &&
                                    cp -r local_install /tmp/argolid_bld
