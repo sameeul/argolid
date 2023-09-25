@@ -211,7 +211,7 @@ void OmeTiffCollToChunked::GenerateOmeXML(const std::string& image_name, const s
 
     // Create the <Image> element
     pugi::xml_node imageNode = omeNode.append_child("Image");
-    imageNode.append_attribute("ID") = image_name.c_str();;
+    imageNode.append_attribute("ID") = "Image:0";
     imageNode.append_attribute("Name") =image_name.c_str();
 
     // Create the <Pixels> element
