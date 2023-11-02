@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.24)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 project(Argolid)
 #==== Compiler Options
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set (TENSORSTORE_USE_SYSTEM_JPEG ON)
+set (TENSORSTORE_USE_SYSTEM_LIBAOM ON)
+set (TENSORSTORE_USE_SYSTEM_DAV1D ON)
 
 # this is a workaround for GitHub Action for wheelbuiling
 if(DEFINED ENV{ARGOLID_DEP_DIR})
