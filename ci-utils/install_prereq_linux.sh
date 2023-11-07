@@ -14,19 +14,20 @@ fi
 mkdir -p $LOCAL_INSTALL_DIR
 mkdir -p $LOCAL_INSTALL_DIR/include
 
-curl -L https://github.com/PolusAI/filepattern/archive/refs/heads/master.zip -o filepattern.zip
-unzip filepattern.zip
-cd filepattern-master/
+curl -L https://github.com/PolusAI/filepattern/archive/refs/tags/v2.0.3.zip -o v2.0.3.zip 
+unzip v2.0.3.zip
+cd filepattern-2.0.3
 mkdir build
 cd build
 cmake -Dfilepattern_SHARED_LIB=ON -DCMAKE_PREFIX_PATH=../../$LOCAL_INSTALL_DIR -DCMAKE_INSTALL_PREFIX=../../$LOCAL_INSTALL_DIR ../src/filepattern/cpp
 make install -j4
 cd ../../
 
-git clone https://github.com/pybind/pybind11.git
-cd pybind11
+curl -L https://github.com/pybind/pybind11/archive/refs/tags/v2.11.1.zip -o v2.11.1.zip
+unzip v2.11.1.zip
+cd pybind11-2.11.1
 mkdir build_man
-cd build_man/
+cd build_man
 cmake -DCMAKE_INSTALL_PREFIX=../../$LOCAL_INSTALL_DIR/  -DPYBIND11_TEST=OFF ..
 make install -j4
 cd ../../
