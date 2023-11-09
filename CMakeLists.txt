@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
+include(GNUInstallDirs)
+
 project(Argolid)
 #==== Compiler Options
 set(CMAKE_CXX_STANDARD 17)
@@ -7,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # this is a workaround for GitHub Action for wheelbuiling
 if(DEFINED ENV{ARGOLID_DEP_DIR})
 	set(CMAKE_PREFIX_PATH $ENV{ARGOLID_DEP_DIR})
-	link_directories($ENV{ARGOLID_DEP_DIR}/lib)
+	link_directories($ENV{ARGOLID_DEP_DIR}/${CMAKE_INSTALL_LIBDIR})
 endif()
 message(STATUS "CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH}")
 if(NOT CMAKE_BUILD_TYPE)
@@ -72,6 +74,9 @@ pybind11_add_module(libargolid
   ${SOURCE}
   src/python/pyramid_python_interface.cpp
 )
+
+# VERSION_INFO is defined by setup.py and passed into the C++ code as a define (VERSION_INFO) here.
+target_compile_definitions(libargolid PRIVATE VERSION_INFO=${VERSION_INFO})
 
 #target_compile_definitions(libargolid PRIVATE WITH_PYTHON_H)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
