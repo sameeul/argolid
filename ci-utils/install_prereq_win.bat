@@ -1,9 +1,9 @@
 mkdir local_install
 mkdir local_install\include
 
-curl -L https://github.com/PolusAI/filepattern/archive/refs/tags/v2.0.3.zip -o v2.0.3.zip 
-tar -xvf v2.0.3.zip
-pushd filepattern-2.0.3
+curl -L https://github.com/PolusAI/filepattern/archive/refs/tags/v2.0.4.zip -o v2.0.4.zip 
+tar -xvf v2.0.4.zip
+pushd filepattern-2.0.4
 mkdir build
 pushd build
 cmake -Dfilepattern_SHARED_LIB=ON -DCMAKE_PREFIX_PATH=../../local_install -DCMAKE_INSTALL_PREFIX=../../local_install ../src/filepattern/cpp

@@ -14,9 +14,9 @@ fi
 mkdir -p $LOCAL_INSTALL_DIR
 mkdir -p $LOCAL_INSTALL_DIR/include
 
-curl -L https://github.com/PolusAI/filepattern/archive/refs/tags/v2.0.3.zip -o v2.0.3.zip 
-unzip v2.0.3.zip
-cd filepattern-2.0.3
+curl -L https://github.com/PolusAI/filepattern/archive/refs/tags/v2.0.4.zip -o v2.0.4.zip 
+unzip v2.0.4.zip
+cd filepattern-2.0.4
 mkdir build
 cd build
 cmake -Dfilepattern_SHARED_LIB=ON -DCMAKE_PREFIX_PATH=../../$LOCAL_INSTALL_DIR -DCMAKE_INSTALL_PREFIX=../../$LOCAL_INSTALL_DIR ../src/filepattern/cpp
