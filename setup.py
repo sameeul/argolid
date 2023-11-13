@@ -97,7 +97,7 @@ setup(
     cmdclass=versioneer.get_cmdclass(dict(build_ext=CMakeBuild)),
     author="Sameeul Bashir Samee",
     author_email="sameeul.samee@axleinfo.com",
-    url="https://github.com/sameeul/argolid",
+    url="https://github.com/PolusAI/argolid",
     description="Pyramid Generator For OMETiff",
     long_description=long_description,
     long_description_content_type="text/markdown",
