@@ -79,9 +79,11 @@ pybind11_add_module(libargolid
 target_compile_definitions(libargolid PRIVATE VERSION_INFO=${VERSION_INFO})
 
 #target_compile_definitions(libargolid PRIVATE WITH_PYTHON_H)
+set(NLJSON_HACK ON) # more details here: https://github.com/nlohmann/json/issues/2311
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fPIC")
   target_link_libraries(libargolid PRIVATE stdc++fs)
+  set(NLJSON_HACK OFF) 
 endif()
 
 target_link_libraries(libargolid PRIVATE tensorstore::tensorstore tensorstore::all_drivers filepattern::filepattern)
