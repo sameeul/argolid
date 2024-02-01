@@ -85,7 +85,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_link_libraries(libargolid PRIVATE stdc++fs)
   set(NLJSON_HACK OFF) 
 endif()
-
+message(STATUS "NLJSON_HACK Value ${NLJSON_HACK}")
 target_link_libraries(libargolid PRIVATE tensorstore::tensorstore tensorstore::all_drivers filepattern::filepattern)
 target_link_libraries(libargolid PRIVATE ${Build_LIBRARIES})  
 
