@@ -124,7 +124,8 @@ void OmeTiffToChunkedPyramid::WriteTSZattrFile(const std::string& tiff_file_name
     combined_metadata["name"] = tiff_file_name;
     combined_metadata["metadata"] = {{"method", "mean"}};
     json final_formated_metadata;
-#if defined(NLJSON_HACK)
+#if defined(__clang__) || defined(_MSC_VER)
+// more details here: https://github.com/nlohmann/json/issues/2311
     final_formated_metadata["multiscales"][0] = {combined_metadata};
 #else
     final_formated_metadata["multiscales"] = {combined_metadata};
@@ -152,7 +153,8 @@ void OmeTiffToChunkedPyramid::WriteVivZattrFile(const std::string& tiff_file_nam
     combined_metadata["name"] = tiff_file_name;
     combined_metadata["metadata"] = {{"method", "mean"}};
     json final_formated_metadata;
-#ifdef _WIN32
+#if defined(__clang__) || defined(_MSC_VER)
+// more details here: https://github.com/nlohmann/json/issues/2311
     final_formated_metadata["multiscales"][0] = {combined_metadata};
 #else
     final_formated_metadata["multiscales"] = {combined_metadata};
