@@ -86,26 +86,7 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
   }
   PLOG_INFO << "Total images found: " << image_vec.size() <<std::endl;
   auto t1 = std::chrono::high_resolution_clock::now();
-  int num_dims, x_dim, y_dim, c_dim;
-
-  if (v == VisType::Viv){ //5D file
-    x_dim = 4;
-    y_dim = 3;
-    c_dim = 1;
-    num_dims = 5;
-  
-  } else if (v == VisType::NG_Zarr){ // 3D file
-    x_dim = 3;
-    y_dim = 2;
-    c_dim = 0;
-    num_dims = 4;
-  
-  } else if (v == VisType::PCNG ){ // 3D file
-    x_dim = 0;
-    y_dim = 1;
-    c_dim = 3;
-    num_dims = 3;
-  }
+  auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
 
   if (image_vec.size() != 0){
     //std::list<tensorstore::WriteFutures> pending_writes;
@@ -205,7 +186,7 @@ void OmeTiffCollToChunked::GenerateOmeXML(const std::string& image_name, const s
     // Add the namespaces and attributes to the root element
     omeNode.append_attribute("xmlns") = "http://www.openmicroscopy.org/Schemas/OME/2016-06";
     omeNode.append_attribute("xmlns:xsi") = "http://www.w3.org/2001/XMLSchema-instance";
-    auto creator = std::string{"Argolid "} + std::string{VERSION_INFO};
+    auto creator = std::string{"Argolid "} + std::string{"000"};
     omeNode.append_attribute("Creator") = creator.c_str();
     omeNode.append_attribute("UUID") = "urn:uuid:ce3367ae-0512-4e87-a045-20d87db14001";
     omeNode.append_attribute("xsi:schemaLocation") = "http://www.openmicroscopy.org/Schemas/OME/2016-06 http://www.openmicroscopy.org/Schemas/OME/2016-06/ome.xsd";

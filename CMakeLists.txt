@@ -27,6 +27,7 @@ set(SOURCE
            src/chunked_base_to_pyr_gen.cpp
            src/ome_tiff_to_chunked_pyramid.cpp
            src/utilities.cpp
+           src/pyramid_view.cpp
 )
 add_executable(test_pyrgen ${SOURCE} tests/main.cpp)
 

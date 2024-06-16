@@ -40,14 +40,22 @@ tensorstore::Spec GetZarrSpecToWrite(   const std::string& filename,
                             }}).value();
 }
 
-tensorstore::Spec GetZarrSpecToRead(const std::string& filename, const std::string& scale_key){
+// tensorstore::Spec GetZarrSpecToRead(const std::string& filename, const std::string& scale_key){
+//     return tensorstore::Spec::FromJson({{"driver", "zarr"},
+//                             {"kvstore", {{"driver", "file"},
+//                                          {"path", filename+"/"+scale_key}}
+//                             }
+//                             }).value();
+}
+
+
+tensorstore::Spec GetZarrSpecToRead(const std::string& filename){
     return tensorstore::Spec::FromJson({{"driver", "zarr"},
                             {"kvstore", {{"driver", "file"},
-                                         {"path", filename+"/"+scale_key}}
+                                         {"path", filename}}
                             }
                             }).value();
 }
-
 
 tensorstore::Spec GetNPCSpecToRead(const std::string& filename, const std::string& scale_key){
     return tensorstore::Spec::FromJson({{"driver", "neuroglancer_precomputed"},

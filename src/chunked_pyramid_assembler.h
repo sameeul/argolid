@@ -17,11 +17,7 @@ struct ImageSegment{
 
 };
 
-struct ImageInfo
-{
-  std::int64_t _full_image_height, _full_image_width, _chunk_size_x, _chunk_size_y, _num_channels;
-  std::string _data_type;
-};
+
 
 class OmeTiffCollToChunked{
 
