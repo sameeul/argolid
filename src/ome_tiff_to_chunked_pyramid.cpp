@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <tiffio.h>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -53,119 +54,119 @@ void OmeTiffToChunkedPyramid::WriteMultiscaleMetadataForSingleFile( const std::s
 }
 
 
-void OmeTiffToChunkedPyramid::WriteMultiscaleMetadataForImageCollection(const std::string& image_file_name , const std::string& output_dir, 
-                                                                        int min_level, int max_level, VisType v, ImageInfo& whole_image)
-{
-    std::string chunked_file_dir = output_dir + "/" + image_file_name + ".zarr";
-    if(v == VisType::NG_Zarr){
-        WriteTSZattrFile(image_file_name, chunked_file_dir, min_level, max_level);
-    } else if (v == VisType::Viv){
-        _tiff_coll_to_chunk.GenerateOmeXML(image_file_name, chunked_file_dir+"/METADATA.ome.xml", whole_image);                   
-        WriteVivZattrFile(image_file_name, chunked_file_dir+"/data.zarr/0/", min_level, max_level);
-        WriteVivZgroupFiles(chunked_file_dir);
-    }
-}
+// void OmeTiffToChunkedPyramid::WriteMultiscaleMetadataForImageCollection(const std::string& image_file_name , const std::string& output_dir, 
+//                                                                         int min_level, int max_level, VisType v, ImageInfo& whole_image)
+// {
+//     std::string chunked_file_dir = output_dir + "/" + image_file_name + ".zarr";
+//     if(v == VisType::NG_Zarr){
+//         WriteTSZattrFile(image_file_name, chunked_file_dir, min_level, max_level);
+//     } else if (v == VisType::Viv){
+//         GenerateOmeXML(image_file_name, chunked_file_dir+"/METADATA.ome.xml", whole_image);                   
+//         WriteVivZattrFile(image_file_name, chunked_file_dir+"/data.zarr/0/", min_level, max_level);
+//         WriteVivZgroupFiles(chunked_file_dir);
+//     }
+// }
 
-void OmeTiffToChunkedPyramid::WriteVivZgroupFiles(const std::string& output_loc){
-    std::string zgroup_text = "{\"zarr_format\": 2}";
-    std::ofstream zgroup_file_1(output_loc+"/data.zarr/.zgroup", std::ios_base::out );
-    if(zgroup_file_1.is_open()){
-        zgroup_file_1 << zgroup_text << std::endl;
-    }
-    std::ofstream zgroup_file_2( output_loc + "/data.zarr/0/.zgroup", std::ios_base::out );
-    if(zgroup_file_2.is_open()){
-        zgroup_file_2 << zgroup_text << std::endl;
-    }
-}
+// void OmeTiffToChunkedPyramid::WriteVivZgroupFiles(const std::string& output_loc){
+//     std::string zgroup_text = "{\"zarr_format\": 2}";
+//     std::ofstream zgroup_file_1(output_loc+"/data.zarr/.zgroup", std::ios_base::out );
+//     if(zgroup_file_1.is_open()){
+//         zgroup_file_1 << zgroup_text << std::endl;
+//     }
+//     std::ofstream zgroup_file_2( output_loc + "/data.zarr/0/.zgroup", std::ios_base::out );
+//     if(zgroup_file_2.is_open()){
+//         zgroup_file_2 << zgroup_text << std::endl;
+//     }
+// }
 
 
-void OmeTiffToChunkedPyramid::ExtractAndWriteXML(const std::string& input_file, const std::string& xml_loc){
-    TIFF *tiff_ = TIFFOpen(input_file.c_str(), "r");
-    if (tiff_ != nullptr) {
-        char* infobuf;
-        TIFFGetField(tiff_, TIFFTAG_IMAGEDESCRIPTION , &infobuf);
-        char* new_pos = strstr(infobuf, "<OME");
-        std::ofstream metadata_file( xml_loc+"/METADATA.ome.xml", std::ios_base::out );
-        if(metadata_file.is_open()){
-            metadata_file << new_pos << std::endl;
-        }
-        if(!metadata_file){
-            PLOG_INFO << "Unable to write metadata file";
-        }
-        TIFFClose(tiff_);
-    }
-}
+// void OmeTiffToChunkedPyramid::ExtractAndWriteXML(const std::string& input_file, const std::string& xml_loc){
+//     TIFF *tiff_ = TIFFOpen(input_file.c_str(), "r");
+//     if (tiff_ != nullptr) {
+//         char* infobuf;
+//         TIFFGetField(tiff_, TIFFTAG_IMAGEDESCRIPTION , &infobuf);
+//         char* new_pos = strstr(infobuf, "<OME");
+//         std::ofstream metadata_file( xml_loc+"/METADATA.ome.xml", std::ios_base::out );
+//         if(metadata_file.is_open()){
+//             metadata_file << new_pos << std::endl;
+//         }
+//         if(!metadata_file){
+//             PLOG_INFO << "Unable to write metadata file";
+//         }
+//         TIFFClose(tiff_);
+//     }
+// }
 
-void OmeTiffToChunkedPyramid::WriteTSZattrFile(const std::string& tiff_file_name, const std::string& zarr_root_dir, int min_level, int max_level){
+// void OmeTiffToChunkedPyramid::WriteTSZattrFile(const std::string& tiff_file_name, const std::string& zarr_root_dir, int min_level, int max_level){
 
-    json zarr_multiscale_axes;
-    zarr_multiscale_axes = json::parse(R"([
-                    {"name": "c", "type": "channel"},
-                    {"name": "z", "type": "space", "unit": "micrometer"},
-                    {"name": "y", "type": "space", "unit": "micrometer"},
-                    {"name": "x", "type": "space", "unit": "micrometer"}
-                ])");
+//     json zarr_multiscale_axes;
+//     zarr_multiscale_axes = json::parse(R"([
+//                     {"name": "c", "type": "channel"},
+//                     {"name": "z", "type": "space", "unit": "micrometer"},
+//                     {"name": "y", "type": "space", "unit": "micrometer"},
+//                     {"name": "x", "type": "space", "unit": "micrometer"}
+//                 ])");
     
     
-    float level = 1.0;
-    json scale_metadata_list = json::array();
-    for(int i=min_level; i<=max_level; ++i){
-        json scale_metadata;
-        scale_metadata["path"] = std::to_string(i);
-        scale_metadata["coordinateTransformations"] = {{{"type", "scale"}, {"scale", {1.0, 1.0, level, level}}}};
-        scale_metadata_list.push_back(scale_metadata);
-        level = level*2;
-    }
+//     float level = 1.0;
+//     json scale_metadata_list = json::array();
+//     for(int i=min_level; i<=max_level; ++i){
+//         json scale_metadata;
+//         scale_metadata["path"] = std::to_string(i);
+//         scale_metadata["coordinateTransformations"] = {{{"type", "scale"}, {"scale", {1.0, 1.0, level, level}}}};
+//         scale_metadata_list.push_back(scale_metadata);
+//         level = level*2;
+//     }
 
-    json combined_metadata;
-    combined_metadata["datasets"] = scale_metadata_list;
-    combined_metadata["version"] = "0.4";
-    combined_metadata["axes"] = zarr_multiscale_axes;
-    combined_metadata["name"] = tiff_file_name;
-    combined_metadata["metadata"] = {{"method", "mean"}};
-    json final_formated_metadata;
-#if defined(__clang__) || defined(_MSC_VER)
-// more details here: https://github.com/nlohmann/json/issues/2311
-    final_formated_metadata["multiscales"][0] = {combined_metadata};
-#else
-    final_formated_metadata["multiscales"] = {combined_metadata};
-#endif
-    std::ofstream f(zarr_root_dir + "/.zattrs",std::ios_base::trunc |std::ios_base::out);
-    if (f.is_open()){
-        f << final_formated_metadata;
-    } else {
-        PLOG_INFO <<"Unable to write .zattr file at "<< zarr_root_dir << ".";
-    }
-}
+//     json combined_metadata;
+//     combined_metadata["datasets"] = scale_metadata_list;
+//     combined_metadata["version"] = "0.4";
+//     combined_metadata["axes"] = zarr_multiscale_axes;
+//     combined_metadata["name"] = tiff_file_name;
+//     combined_metadata["metadata"] = {{"method", "mean"}};
+//     json final_formated_metadata;
+// #if defined(__clang__) || defined(_MSC_VER)
+// // more details here: https://github.com/nlohmann/json/issues/2311
+//     final_formated_metadata["multiscales"][0] = {combined_metadata};
+// #else
+//     final_formated_metadata["multiscales"] = {combined_metadata};
+// #endif
+//     std::ofstream f(zarr_root_dir + "/.zattrs",std::ios_base::trunc |std::ios_base::out);
+//     if (f.is_open()){
+//         f << final_formated_metadata;
+//     } else {
+//         PLOG_INFO <<"Unable to write .zattr file at "<< zarr_root_dir << ".";
+//     }
+// }
 
-void OmeTiffToChunkedPyramid::WriteVivZattrFile(const std::string& tiff_file_name, const std::string& zattr_file_loc, int min_level, int max_level){
+// void OmeTiffToChunkedPyramid::WriteVivZattrFile(const std::string& tiff_file_name, const std::string& zattr_file_loc, int min_level, int max_level){
     
-    json scale_metadata_list = json::array();
-    for(int i=min_level; i<=max_level; ++i){
-        json scale_metadata;
-        scale_metadata["path"] = std::to_string(i);
-        scale_metadata_list.push_back(scale_metadata);
-    }
+//     json scale_metadata_list = json::array();
+//     for(int i=min_level; i<=max_level; ++i){
+//         json scale_metadata;
+//         scale_metadata["path"] = std::to_string(i);
+//         scale_metadata_list.push_back(scale_metadata);
+//     }
 
-    json combined_metadata;
-    combined_metadata["datasets"] = scale_metadata_list;
-    combined_metadata["version"] = "0.1";
-    combined_metadata["name"] = tiff_file_name;
-    combined_metadata["metadata"] = {{"method", "mean"}};
-    json final_formated_metadata;
-#if defined(__clang__) || defined(_MSC_VER)
-// more details here: https://github.com/nlohmann/json/issues/2311
-    final_formated_metadata["multiscales"][0] = {combined_metadata};
-#else
-    final_formated_metadata["multiscales"] = {combined_metadata};
-#endif    
-    std::ofstream f(zattr_file_loc + "/.zattrs",std::ios_base::trunc |std::ios_base::out);
-    if (f.is_open()){   
-        f << final_formated_metadata;
-    } else {
-        std::cout << "Unable to write .zattr file at " << zattr_file_loc << "." << std::endl;
-    }
-}
+//     json combined_metadata;
+//     combined_metadata["datasets"] = scale_metadata_list;
+//     combined_metadata["version"] = "0.1";
+//     combined_metadata["name"] = tiff_file_name;
+//     combined_metadata["metadata"] = {{"method", "mean"}};
+//     json final_formated_metadata;
+// #if defined(__clang__) || defined(_MSC_VER)
+// // more details here: https://github.com/nlohmann/json/issues/2311
+//     final_formated_metadata["multiscales"][0] = {combined_metadata};
+// #else
+//     final_formated_metadata["multiscales"] = {combined_metadata};
+// #endif    
+//     std::ofstream f(zattr_file_loc + "/.zattrs",std::ios_base::trunc |std::ios_base::out);
+//     if (f.is_open()){   
+//         f << final_formated_metadata;
+//     } else {
+//         std::cout << "Unable to write .zattr file at " << zattr_file_loc << "." << std::endl;
+//     }
+// }
 
 
 void OmeTiffToChunkedPyramid::GenerateFromCollection(

@@ -39,7 +39,13 @@ tensorstore::Spec GetNPCSpecToWrite(const std::string& filename,
 
 uint16_t GetDataTypeCode (std::string_view type_name);
 std::string GetUTCString();
-
+void WriteTSZattrFile(const std::string& tiff_file_name, const std::string& zattr_file_loc, int min_level, int max_level);
+void WriteVivZattrFile(const std::string& tiff_file_name, const std::string& zattr_file_loc, int min_level, int max_level);
+void WriteVivZgroupFiles(const std::string& output_loc);
+void ExtractAndWriteXML(const std::string& input_file, const std::string& xml_loc);
+void WriteMultiscaleMetadataForImageCollection(const std::string& image_file_name , const std::string& output_dir, 
+                                                int min_level, int max_level, VisType v, ImageInfo& whole_image);
+void GenerateOmeXML(const std::string& image_name, const std::string& output_file, ImageInfo& whole_image);
 inline std::tuple<int,int,int,int> GetZarrParams(VisType v){
   // returns {x_dim_index, y_dim_index, c_dim_index, num_dims}
   if (v == VisType::Viv){ //5D file

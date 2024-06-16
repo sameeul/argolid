@@ -24,7 +24,10 @@ public:
     
     void AssembleBaseLevel(VisType v);
     void AssembleBaseLevel(VisType v, image_map m);
-    void GeneratePyramid(std::optional<image_map> map, VisType v);
+    void GeneratePyramid(std::optional<image_map> map, 
+                                    VisType v, 
+                                    int min_dim,  
+                                    std::unordered_map<std::int64_t, DSType>& channel_ds_config);
 
 
 private:

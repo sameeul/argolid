@@ -28,11 +28,12 @@
 #include <nlohmann/json.hpp>
 
 #include "pyramid_view.h"
+#include "chunked_base_to_pyr_gen.h"
 #include "utilities.h"
 #include "pugixml.hpp"
 #include <plog/Log.h>
 #include "plog/Initializers/RollingFileInitializer.h"
-
+#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
@@ -158,7 +159,7 @@ namespace argolid {
   }
 
   void PyramidView::AssembleBaseLevel(VisType v, image_map m) {
-    
+
     auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
 
     auto input_spec = [v, this]() {
@@ -191,9 +192,12 @@ namespace argolid {
       new_image_shape[c_dim] = base_image_shape[c_dim];
     }
 
+
     auto output_spec = [v, & new_image_shape, & chunk_shape, & base_store, this]() {
-      if (v == VisType::NG_Zarr | v == VisType::Viv) {
+      if (v == VisType::NG_Zarr) {
         return GetZarrSpecToWrite(pyramid_zarr_path + "/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
+      } else if (v == VisType::Viv) {
+        return GetZarrSpecToWrite(pyramid_zarr_path + "/data.zarr/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
       } else {
         return tensorstore::Spec();
       }
@@ -267,7 +271,50 @@ namespace argolid {
     th_pool.wait_for_tasks();
   }
 
-  void PyramidView::GeneratePyramid(std::optional<image_map> map, VisType v){
+  void PyramidView::GeneratePyramid(std::optional<image_map> map, 
+                                    VisType v, 
+                                    int min_dim,  
+                                    std::unordered_map<std::int64_t, DSType>& channel_ds_config)
+  {
+    auto output_zarr_path = [v, this](){
+      if (v==VisType::Viv){
+        return pyramid_zarr_path+"/data.zarr";
+      } else {
+        return pyramid_zarr_path;
+      }
+    }();
+
+    if (map.has_value()){
+      AssembleBaseLevel(v,map.value());
+    } else {
+      // copy base level zarr file
+        fs::path destination{output_zarr_path+"/0"};
+        if (!fs::exists(destination)) {
+            fs::create_directories(destination);
+        }
+
+        // Iterate over files in the source directory
+        fs::path source{base_zarr_path};
+        for (const auto& entry : fs::directory_iterator(source)) {
+            const auto& path = entry.path();
+            auto destPath = destination / path.filename();
+
+            // Copy file
+            if (fs::is_regular_file(path)) {
+                fs::copy_file(path, destPath, fs::copy_options::overwrite_existing);
+            }
+        }
+    }
+
+    // generate pyramid
+    ChunkedBaseToPyramid base_to_pyramid;
+    int base_level_key = 0;
+    int max_level = static_cast<int>(ceil(log2(std::max({base_image._full_image_width, base_image._full_image_width}))));
+    int min_level = static_cast<int>(ceil(log2(min_dim)));
+    auto max_level_key = max_level-min_level+1;
+    base_to_pyramid.CreatePyramidImages(output_zarr_path, output_zarr_path, base_level_key, min_dim, v, channel_ds_config, th_pool);
+    
+    // generate metadata
     
   }
 
