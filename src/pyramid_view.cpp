@@ -158,7 +158,7 @@ namespace argolid {
     base_image = whole_image;
   }
 
-  void PyramidView::AssembleBaseLevel(VisType v, image_map m) {
+  void PyramidView::AssembleBaseLevel(VisType v, image_map m, const std::string& output_path) {
 
     auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
 
@@ -193,11 +193,11 @@ namespace argolid {
     }
 
 
-    auto output_spec = [v, & new_image_shape, & chunk_shape, & base_store, this]() {
+    auto output_spec = [v, &output_path, &new_image_shape, & chunk_shape, & base_store, this]() {
       if (v == VisType::NG_Zarr) {
-        return GetZarrSpecToWrite(pyramid_zarr_path + "/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
+        return GetZarrSpecToWrite(output_path + "/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
       } else if (v == VisType::Viv) {
-        return GetZarrSpecToWrite(pyramid_zarr_path + "/data.zarr/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
+        return GetZarrSpecToWrite(output_path + "/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
       } else {
         return tensorstore::Spec();
       }
@@ -276,16 +276,16 @@ namespace argolid {
                                     int min_dim,  
                                     std::unordered_map<std::int64_t, DSType>& channel_ds_config)
   {
-    auto output_zarr_path = [v, this](){
+    const auto output_zarr_path = [v, this](){
       if (v==VisType::Viv){
-        return pyramid_zarr_path+"/data.zarr";
+        return pyramid_zarr_path + "/" + image_name +".zarr/data.zarr/0";
       } else {
-        return pyramid_zarr_path;
+        return pyramid_zarr_path + "/" + image_name +".zarr/0";
       }
     }();
 
     if (map.has_value()){
-      AssembleBaseLevel(v,map.value());
+      AssembleBaseLevel(v,map.value(),output_zarr_path);
     } else {
       // copy base level zarr file
         fs::path destination{output_zarr_path+"/0"};
@@ -315,7 +315,7 @@ namespace argolid {
     base_to_pyramid.CreatePyramidImages(output_zarr_path, output_zarr_path, base_level_key, min_dim, v, channel_ds_config, th_pool);
     
     // generate metadata
-    
+    WriteMultiscaleMetadataForImageCollection(image_name, pyramid_zarr_path, base_level_key, max_level_key, v, base_image);
   }
 
 } // ns argolid

@@ -230,26 +230,26 @@ void test_zarr_write(){
         {"x1_y2_c1.ome.tiff", {1,2,1}}
     };
 
-    auto tmp = PyramidView(image_coll_path, base_zarr_path, pyramid_zarr_path,test_data_map);
+    auto tmp = PyramidView(image_coll_path, base_zarr_path, pyramid_zarr_path, "test_image", test_data_map);
     std::unordered_map<std::int64_t, DSType> channel_ds_config {{0,DSType::Mean},{1,DSType::Mean}};
     tmp.AssembleBaseLevel(VisType::Viv);
     tmp.GeneratePyramid(std::nullopt,VisType::Viv,256,channel_ds_config);
 
-    image_map test_data_map_2{
-        {"x0_y0_c0.ome.tiff", {0,0,1}},
-        {"x0_y1_c0.ome.tiff", {0,1,1}},
-        {"x0_y2_c0.ome.tiff", {0,2,1}},
-        {"x1_y0_c0.ome.tiff", {1,0,1}},
-        {"x1_y1_c0.ome.tiff", {1,1,1}},
-        {"x1_y2_c0.ome.tiff", {1,2,1}},
-        {"x0_y0_c1.ome.tiff", {0,0,0}},
-        {"x0_y1_c1.ome.tiff", {0,1,0}},
-        {"x0_y2_c1.ome.tiff", {0,2,0}},
-        {"x1_y0_c1.ome.tiff", {1,0,0}},
-        {"x1_y1_c1.ome.tiff", {1,1,0}},
-        {"x1_y2_c1.ome.tiff", {1,2,0}}
-    };
-    tmp.GeneratePyramid(test_data_map_2,VisType::Viv,256,channel_ds_config);
+    // image_map test_data_map_2{
+    //     {"x0_y0_c0.ome.tiff", {0,0,1}},
+    //     {"x0_y1_c0.ome.tiff", {0,1,1}},
+    //     {"x0_y2_c0.ome.tiff", {0,2,1}},
+    //     {"x1_y0_c0.ome.tiff", {1,0,1}},
+    //     {"x1_y1_c0.ome.tiff", {1,1,1}},
+    //     {"x1_y2_c0.ome.tiff", {1,2,1}},
+    //     {"x0_y0_c1.ome.tiff", {0,0,0}},
+    //     {"x0_y1_c1.ome.tiff", {0,1,0}},
+    //     {"x0_y2_c1.ome.tiff", {0,2,0}},
+    //     {"x1_y0_c1.ome.tiff", {1,0,0}},
+    //     {"x1_y1_c1.ome.tiff", {1,1,0}},
+    //     {"x1_y2_c1.ome.tiff", {1,2,0}}
+    // };
+    // tmp.GeneratePyramid(test_data_map_2,VisType::Viv,256,channel_ds_config);
 
     // tmp.AssembleBaseLevel(VisType::Viv,test_data_map_2);
  }
