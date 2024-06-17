@@ -131,7 +131,7 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
     
     auto t4 = std::chrono::high_resolution_clock::now();
     for(const auto& i: image_vec){        
-      th_pool.push_task([&dest, i, x_dim, y_dim, c_dim, v, &whole_image](){
+      th_pool.push_task([&dest, i, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, &whole_image](){
 
 
         TENSORSTORE_CHECK_OK_AND_ASSIGN(auto source, tensorstore::Open(

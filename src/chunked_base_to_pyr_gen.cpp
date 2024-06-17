@@ -213,7 +213,7 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
                 th_pool.push_task([ &store1, &store2, 
                                     prev_x_start, prev_x_end, prev_y_start, prev_y_end, 
                                     x_start, x_end, y_start, y_end, 
-                                    x_dim, y_dim, c_dim, c, v, downsampling_func_ptr](){  
+                                    x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, c, v, downsampling_func_ptr](){  
                     std::vector<T> read_buffer((prev_x_end-prev_x_start)*(prev_y_end-prev_y_start));
                     auto array = tensorstore::Array(read_buffer.data(), {prev_y_end-prev_y_start, prev_x_end-prev_x_start}, tensorstore::c_order);
 
