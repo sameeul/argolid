@@ -103,7 +103,7 @@ namespace argolid {
 
       auto t4 = std::chrono::high_resolution_clock::now();
       for (const auto & [file_name, location]: base_image_map) {
-        th_pool.push_task([ & dest, file_name, location, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, & whole_image, this]() {
+        th_pool.push_task([ &dest, file_name=file_name, location=location, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, &whole_image, this]() {
 
           TENSORSTORE_CHECK_OK_AND_ASSIGN(auto source, tensorstore::Open(
             GetOmeTiffSpecToRead(image_coll_path + "/" + file_name),
@@ -212,7 +212,7 @@ namespace argolid {
 
     for (const auto & [file_name, location]: m) {
       // find where to read data from
-      const auto base_location = [ & file_name, this]() -> std::optional < std::tuple < std::uint32_t,
+      const auto base_location = [file_name=file_name, this]() -> std::optional < std::tuple < std::uint32_t,
         uint32_t, uint32_t >> {
           if (auto search = base_image_map.find(file_name); search != base_image_map.end()) {
             return std::optional {
@@ -227,7 +227,7 @@ namespace argolid {
         continue;
       }
 
-      th_pool.push_task([ & base_store, & dest, file_name, location, base_location, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, this]() {
+      th_pool.push_task([ &base_store, &dest, file_name=file_name, location=location, base_location, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, this]() {
 
         const auto & [x_grid_base, y_grid_base, c_grid_base] = base_location.value();
 
