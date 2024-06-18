@@ -14,7 +14,8 @@ PYBIND11_MODULE(libargolid, m) {
 
     py::class_<argolid::PyramidView, std::shared_ptr<argolid::PyramidView>>(m, "PyramidViewCPP") \
     .def(py::init<std::string_view, std::string, std::string, std::string, argolid::image_map&>()) \
-    .def("GeneratePyramid", &argolid::PyramidView::GeneratePyramid);
+    .def("GeneratePyramid", &argolid::PyramidView::GeneratePyramid) \
+    .def("AssembleBaseLevel", &argolid::PyramidView::AssembleBaseLevel) ;
 
     py::enum_<argolid::VisType>(m, "VisType")
         .value("NG_Zarr", argolid::VisType::NG_Zarr)

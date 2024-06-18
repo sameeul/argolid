@@ -16,7 +16,7 @@ public:
                 std::string base_zarr_loc,
                 std::string pyramid_zarr_loc,
                 std::string output_image_name,
-                image_map& map):
+                const image_map& map):
         image_coll_path(image_path), 
         base_zarr_path(base_zarr_loc),
         pyramid_zarr_path(pyramid_zarr_loc),
@@ -25,7 +25,7 @@ public:
         {}
     
     void AssembleBaseLevel(VisType v);
-    void AssembleBaseLevel(VisType v, image_map m, const std::string& output_path);
+    void ReAssembleBaseLevelWithNewMap(VisType v, const image_map& m, const std::string& output_path);
     void GeneratePyramid(std::optional<image_map> map, 
                                     VisType v, 
                                     int min_dim,  

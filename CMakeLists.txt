@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
-include(GNUInstallDirs)
-
 project(Argolid)
 #==== Compiler Options
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(GNUInstallDirs)
 # this is a workaround for GitHub Action for wheelbuiling
 if(DEFINED ENV{ARGOLID_DEP_DIR})
 	set(CMAKE_PREFIX_PATH $ENV{ARGOLID_DEP_DIR})

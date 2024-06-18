@@ -158,7 +158,7 @@ namespace argolid {
     base_image = whole_image;
   }
 
-  void PyramidView::AssembleBaseLevel(VisType v, image_map m, const std::string& output_path) {
+  void PyramidView::ReAssembleBaseLevelWithNewMap(VisType v, const image_map& m, const std::string& output_path) {
 
     auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
 
@@ -285,7 +285,7 @@ namespace argolid {
     }();
 
     if (map.has_value()){
-      AssembleBaseLevel(v,map.value(),output_zarr_path);
+      ReAssembleBaseLevelWithNewMap(v,map.value(),output_zarr_path);
     } else {
       // copy base level zarr file
         fs::path destination{output_zarr_path+"/0"};
