@@ -34,11 +34,5 @@ private:
     ChunkedBaseToPyramid _base_to_pyramid;
     OmeTiffCollToChunked _tiff_coll_to_chunk;
     BS::thread_pool _th_pool;
-
-    void WriteMultiscaleMetadataForSingleFile(  const std::string& input_file, 
-                                                const std::string& output_dir,
-                                                int min_level, int max_level,
-                                                VisType v);
-     
 };
 } // ns argolid
