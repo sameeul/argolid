@@ -28,7 +28,6 @@ set(SOURCE
            src/utilities.cpp
            src/pyramid_view.cpp
 )
-add_executable(test_pyrgen ${SOURCE} tests/main.cpp)
 
 include(FetchContent)
 
@@ -47,15 +46,8 @@ FetchContent_MakeAvailable(tensorstore)
 include_directories(lib/pugixml)
 include_directories(lib/plog/include)
 include_directories(lib/bs_threadpool)
-target_link_libraries(
-  test_pyrgen
-  PRIVATE
-    tensorstore::tensorstore tensorstore::all_drivers
-)
-
 
 find_package(filepattern REQUIRED)
-target_link_libraries(test_pyrgen PRIVATE filepattern::filepattern)
 
 find_package(Threads QUIET)
 if (Threads_FOUND)
@@ -76,6 +68,9 @@ pybind11_add_module(libargolid
 )
 
 # VERSION_INFO is defined by setup.py and passed into the C++ code as a define (VERSION_INFO) here.
+if (NOT DEFINED VERSION_INFO)
+  set(VERSION_INFO  "000")
+endif()
 target_compile_definitions(libargolid PRIVATE VERSION_INFO=${VERSION_INFO})
 
 #target_compile_definitions(libargolid PRIVATE WITH_PYTHON_H)
@@ -86,9 +81,3 @@ endif()
 
 target_link_libraries(libargolid PRIVATE tensorstore::tensorstore tensorstore::all_drivers filepattern::filepattern)
 target_link_libraries(libargolid PRIVATE ${Build_LIBRARIES})  
-
-target_link_libraries(
-  test_pyrgen
-  PRIVATE
-    ${Build_LIBRARIES}
-)

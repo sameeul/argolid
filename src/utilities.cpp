@@ -2,6 +2,7 @@
 #include <ctime>
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 #include <plog/Log.h>
 #include <tiffio.h>
 #include "pugixml.hpp"
@@ -9,6 +10,7 @@
 #include "utilities.h"
 
 using json = nlohmann::json;
+namespace fs = std::filesystem;
 
 namespace argolid {
 tensorstore::Spec GetOmeTiffSpecToRead(const std::string& filename){
@@ -46,15 +48,6 @@ tensorstore::Spec GetZarrSpecToWrite(   const std::string& filename,
                                           },
                             }}).value();
 }
-
-// tensorstore::Spec GetZarrSpecToRead(const std::string& filename, const std::string& scale_key){
-//     return tensorstore::Spec::FromJson({{"driver", "zarr"},
-//                             {"kvstore", {{"driver", "file"},
-//                                          {"path", filename+"/"+scale_key}}
-//                             }
-//                             }).value();
-//}
-
 
 tensorstore::Spec GetZarrSpecToRead(const std::string& filename){
     return tensorstore::Spec::FromJson({{"driver", "zarr"},
@@ -233,7 +226,7 @@ void WriteVivZattrFile(const std::string& tiff_file_name, const std::string& zat
     if (f.is_open()){   
         f << final_formated_metadata;
     } else {
-        std::cout << "Unable to write .zattr file at " << zattr_file_loc << "." << std::endl;
+        PLOG_INFO << "Unable to write .zattr file at " << zattr_file_loc << ".";
     }
 }
 
@@ -289,7 +282,7 @@ void GenerateOmeXML(const std::string& image_name, const std::string& output_fil
     // Add the namespaces and attributes to the root element
     omeNode.append_attribute("xmlns") = "http://www.openmicroscopy.org/Schemas/OME/2016-06";
     omeNode.append_attribute("xmlns:xsi") = "http://www.w3.org/2001/XMLSchema-instance";
-    auto creator = std::string{"Argolid "} + std::string{"000"};
+    auto creator = std::string{"Argolid "} + std::string{VERSION_INFO};
     omeNode.append_attribute("Creator") = creator.c_str();
     omeNode.append_attribute("UUID") = "urn:uuid:ce3367ae-0512-4e87-a045-20d87db14001";
     omeNode.append_attribute("xsi:schemaLocation") = "http://www.openmicroscopy.org/Schemas/OME/2016-06 http://www.openmicroscopy.org/Schemas/OME/2016-06/ome.xsd";
@@ -322,6 +315,35 @@ void GenerateOmeXML(const std::string& image_name, const std::string& output_fil
     }
   
     doc.save_file(output_file.c_str());
+}
+
+void WriteMultiscaleMetadataForSingleFile( const std::string& input_file , const std::string& output_dir, 
+                                                                    int min_level, int max_level, VisType v)
+{
+    std::string tiff_file_name = fs::path(input_file).stem().string();
+    std::string chunked_file_dir = output_dir + "/" + tiff_file_name + ".zarr";
+    if(v == VisType::NG_Zarr){
+
+        WriteTSZattrFile(tiff_file_name, chunked_file_dir, min_level, max_level);
+    } else if (v == VisType::Viv){
+        ExtractAndWriteXML(input_file, chunked_file_dir);
+        WriteVivZattrFile(tiff_file_name, chunked_file_dir+"/data.zarr/0/", min_level, max_level);
+        WriteVivZgroupFiles(chunked_file_dir);
+    }
+}
+
+std::optional<std::tuple<std::uint32_t, std::uint32_t>> GetTiffDims (const std::string filename){
+    TIFF *tiff_ = TIFFOpen(filename.c_str(), "r");
+    if (tiff_ != nullptr) {
+        uint32_t image_width = 0, image_height = 0;
+        TIFFGetField(tiff_, TIFFTAG_IMAGEWIDTH, &image_width);
+        TIFFGetField(tiff_, TIFFTAG_IMAGELENGTH, &image_height);
+        TIFFClose(tiff_);  
+        return {{image_height, image_width}};
+    } else {
+        return std::nullopt;
+    }
+
 }
 
 } // ns argolid

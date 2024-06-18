@@ -35,18 +35,10 @@ private:
     OmeTiffCollToChunked _tiff_coll_to_chunk;
     BS::thread_pool _th_pool;
 
-    // void WriteMultiscaleMetadataForImageCollection( const std::string& input_file, 
-    //                                                 const std::string& output_dir,
-    //                                                 int min_level, int max_level,
-                                                    // VisType v, ImageInfo& whole_image);
     void WriteMultiscaleMetadataForSingleFile(  const std::string& input_file, 
                                                 const std::string& output_dir,
                                                 int min_level, int max_level,
                                                 VisType v);
-    //void ExtractAndWriteXML(const std::string& input_file, const std::string& xml_loc);
-    //void WriteTSZattrFile(const std::string& tiff_file_name, const std::string& zattr_file_loc, int min_level, int max_level);
-    //void WriteVivZattrFile(const std::string& tiff_file_name, const std::string& zattr_file_loc, int min_level, int max_level);
-    //void WriteVivZgroupFiles(const std::string& output_dir);
      
 };
 } // ns argolid

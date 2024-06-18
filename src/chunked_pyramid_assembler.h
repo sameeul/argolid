@@ -31,6 +31,5 @@ public:
                   const std::string& scale_key, 
                   VisType v, 
                   BS::thread_pool& th_pool);
-    //void GenerateOmeXML(const std::string& image_name, const std::string& output_file, ImageInfo& whole_image);
 };
 } // ns argolid

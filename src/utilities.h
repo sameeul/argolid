@@ -46,6 +46,8 @@ void ExtractAndWriteXML(const std::string& input_file, const std::string& xml_lo
 void WriteMultiscaleMetadataForImageCollection(const std::string& image_file_name , const std::string& output_dir, 
                                                 int min_level, int max_level, VisType v, ImageInfo& whole_image);
 void GenerateOmeXML(const std::string& image_name, const std::string& output_file, ImageInfo& whole_image);
+void WriteMultiscaleMetadataForSingleFile( const std::string& input_file , const std::string& output_dir, 
+                                                                    int min_level, int max_level, VisType v);
 inline std::tuple<int,int,int,int> GetZarrParams(VisType v){
   // returns {x_dim_index, y_dim_index, c_dim_index, num_dims}
   if (v == VisType::Viv){ //5D file
@@ -56,4 +58,6 @@ inline std::tuple<int,int,int,int> GetZarrParams(VisType v){
     return {0,1,3,3};
   }
 }
+
+std::optional<std::tuple<std::uint32_t, std::uint32_t>> GetTiffDims (const std::string filename);
 } // ns argolid

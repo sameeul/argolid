@@ -175,49 +175,4 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
   }
   return std::move(whole_image);
 }
-
-// void OmeTiffCollToChunked::GenerateOmeXML(const std::string& image_name, const std::string& output_file, ImageInfo& whole_image){
-
-//     pugi::xml_document doc;
-
-//     // Create the root element <OME>
-//     pugi::xml_node omeNode = doc.append_child("OME");
-    
-//     // Add the namespaces and attributes to the root element
-//     omeNode.append_attribute("xmlns") = "http://www.openmicroscopy.org/Schemas/OME/2016-06";
-//     omeNode.append_attribute("xmlns:xsi") = "http://www.w3.org/2001/XMLSchema-instance";
-//     auto creator = std::string{"Argolid "} + std::string{"000"};
-//     omeNode.append_attribute("Creator") = creator.c_str();
-//     omeNode.append_attribute("UUID") = "urn:uuid:ce3367ae-0512-4e87-a045-20d87db14001";
-//     omeNode.append_attribute("xsi:schemaLocation") = "http://www.openmicroscopy.org/Schemas/OME/2016-06 http://www.openmicroscopy.org/Schemas/OME/2016-06/ome.xsd";
-
-//     // Create the <Image> element
-//     pugi::xml_node imageNode = omeNode.append_child("Image");
-//     imageNode.append_attribute("ID") = "Image:0";
-//     imageNode.append_attribute("Name") =image_name.c_str();
-
-//     // Create the <Pixels> element
-//     pugi::xml_node pixelsNode = imageNode.append_child("Pixels");
-//     pixelsNode.append_attribute("BigEndian") = "false";
-//     pixelsNode.append_attribute("DimensionOrder") = "XYZCT";
-//     pixelsNode.append_attribute("ID") = "Pixels:0";
-//     pixelsNode.append_attribute("Interleaved") = "false";
-//     pixelsNode.append_attribute("SizeC") = std::to_string(whole_image._num_channels).c_str();;
-//     pixelsNode.append_attribute("SizeT") = "1";
-//     pixelsNode.append_attribute("SizeX") = std::to_string(whole_image._full_image_width).c_str();
-//     pixelsNode.append_attribute("SizeY") = std::to_string(whole_image._full_image_height).c_str();
-//     pixelsNode.append_attribute("SizeZ") = "1";
-//     pixelsNode.append_attribute("Type") = whole_image._data_type.c_str();
-
-//     // Create the <Channel> elements
-//     for(std::int64_t i=0; i<whole_image._num_channels; ++i){
-//       pugi::xml_node channelNode = pixelsNode.append_child("Channel");
-//       channelNode.append_attribute("ID") = ("Channel:0:" + std::to_string(i)).c_str();
-//       channelNode.append_attribute("SamplesPerPixel") = "1";
-//       // Create the <LightPath> elements
-//       channelNode.append_child("LightPath");
-//     }
-  
-//     doc.save_file(output_file.c_str());
-// }
 } // ns argolid
