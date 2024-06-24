@@ -43,6 +43,10 @@ using::tensorstore::internal_zarr::ChooseBaseDType;
 namespace argolid {
 
   void PyramidView::AssembleBaseLevel(VisType v) {
+     if (v!=VisType::NG_Zarr && v!=VisType::Viv) {
+      PLOG_INFO << "Unsupported Pyramid type requested";
+      return;
+    }
 
     int grid_x_max = 0, grid_y_max = 0, grid_c_max = 0;
 
@@ -61,7 +65,6 @@ namespace argolid {
     ImageInfo whole_image;
 
     if (img_count != 0) {
-      //std::list<tensorstore::WriteFutures> pending_writes;
       size_t write_failed_count = 0;
       const auto & sample_tiff_file = image_coll_path + "/" + base_image_map.begin() -> first;
       TENSORSTORE_CHECK_OK_AND_ASSIGN(auto test_source, tensorstore::Open(
@@ -83,16 +86,10 @@ namespace argolid {
       chunk_shape[y_dim] = whole_image._chunk_size_y;
       chunk_shape[x_dim] = whole_image._chunk_size_x;
       whole_image._data_type = test_source.dtype().name();
-      if (v == VisType::NG_Zarr || v == VisType::Viv) {
-        new_image_shape[c_dim] = whole_image._num_channels;
-      }
+      new_image_shape[c_dim] = whole_image._num_channels;
 
-      auto output_spec = [ & ]() {
-        if (v == VisType::NG_Zarr || v == VisType::Viv) {
+      auto output_spec = [&test_source, &new_image_shape, &chunk_shape, this]() {
           return GetZarrSpecToWrite(base_zarr_path, new_image_shape, chunk_shape, ChooseBaseDType(test_source.dtype()).value().encoded_dtype);
-        } else {
-          return tensorstore::Spec();
-        }
       }();
 
       TENSORSTORE_CHECK_OK_AND_ASSIGN(auto dest, tensorstore::Open(
@@ -128,19 +125,7 @@ namespace argolid {
           const auto & [x_grid, y_grid, c_grid] = location;
 
           tensorstore::IndexTransform < > transform = tensorstore::IdentityTransform(dest.domain());
-          if (v == VisType::PCNG) {
-            transform = (std::move(transform) | tensorstore::Dims("z", "channel").IndexSlice({
-                0,
-                c_grid
-              }) |
-              tensorstore::Dims(y_dim).SizedInterval(y_grid * whole_image._chunk_size_y, image_height) |
-              tensorstore::Dims(x_dim).SizedInterval(x_grid * whole_image._chunk_size_x, image_width) |
-              tensorstore::Dims(x_dim, y_dim).Transpose({
-                y_dim,
-                x_dim
-              })).value();
-
-          } else if (v == VisType::NG_Zarr) {
+          if (v == VisType::NG_Zarr) {
             transform = (std::move(transform) | tensorstore::Dims(c_dim).SizedInterval(c_grid, 1) |
               tensorstore::Dims(y_dim).SizedInterval(y_grid * whole_image._chunk_size_y, image_height) |
               tensorstore::Dims(x_dim).SizedInterval(x_grid * whole_image._chunk_size_x, image_width)).value();
@@ -160,14 +145,15 @@ namespace argolid {
 
   void PyramidView::ReAssembleBaseLevelWithNewMap(VisType v, const image_map& m, const std::string& output_path) {
 
+     if (v!=VisType::NG_Zarr && v!=VisType::Viv) {
+      PLOG_INFO << "Unsupported Pyramid type requested";
+      return;
+     }
+    
     auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
 
-    auto input_spec = [v, this]() {
-      if (v == VisType::NG_Zarr | v == VisType::Viv) {
+    auto input_spec = [this]() {
         return GetZarrSpecToRead(base_zarr_path);
-      } else { // this will probably never happen
-        return tensorstore::Spec();
-      }
     }();
 
     TENSORSTORE_CHECK_OK_AND_ASSIGN(auto base_store, tensorstore::Open(
@@ -187,10 +173,8 @@ namespace argolid {
     chunk_shape[x_dim] = read_chunk_shape[x_dim];
 
     auto open_mode = tensorstore::OpenMode::create;
-    if (v == VisType::NG_Zarr | v == VisType::Viv) {
-      open_mode = open_mode | tensorstore::OpenMode::delete_existing;
-      new_image_shape[c_dim] = base_image_shape[c_dim];
-    }
+    open_mode = open_mode | tensorstore::OpenMode::delete_existing;
+    new_image_shape[c_dim] = base_image_shape[c_dim];
 
 
     auto output_spec = [v, &output_path, &new_image_shape, & chunk_shape, & base_store, this]() {
@@ -198,8 +182,6 @@ namespace argolid {
         return GetZarrSpecToWrite(output_path + "/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
       } else if (v == VisType::Viv) {
         return GetZarrSpecToWrite(output_path + "/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
-      } else {
-        return tensorstore::Spec();
       }
     }();
 
@@ -276,6 +258,10 @@ namespace argolid {
                                     int min_dim,  
                                     std::unordered_map<std::int64_t, DSType>& channel_ds_config)
   {
+    if (v!=VisType::NG_Zarr && v!=VisType::Viv) {
+      PLOG_INFO << "Unsupported Pyramid type requested";
+      return;
+    }
     const auto output_zarr_path = [v, this](){
       if (v==VisType::Viv){
         return pyramid_zarr_path + "/" + image_name +".zarr/data.zarr/0";
