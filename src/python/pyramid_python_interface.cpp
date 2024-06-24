@@ -1,4 +1,5 @@
 #include "../ome_tiff_to_chunked_pyramid.h"
+#include "../pyramid_view.h"
 #include "../utilities.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -10,6 +11,11 @@ PYBIND11_MODULE(libargolid, m) {
     .def("GenerateFromSingleFile", &argolid::OmeTiffToChunkedPyramid::GenerateFromSingleFile) \
     .def("GenerateFromCollection", &argolid::OmeTiffToChunkedPyramid::GenerateFromCollection) \
     .def("SetLogLevel", &argolid::OmeTiffToChunkedPyramid::SetLogLevel) ;
+
+    py::class_<argolid::PyramidView, std::shared_ptr<argolid::PyramidView>>(m, "PyramidViewCPP") \
+    .def(py::init<std::string_view, std::string, std::string, std::string, argolid::image_map&>()) \
+    .def("GeneratePyramid", &argolid::PyramidView::GeneratePyramid) \
+    .def("AssembleBaseLevel", &argolid::PyramidView::AssembleBaseLevel) ;
 
     py::enum_<argolid::VisType>(m, "VisType")
         .value("NG_Zarr", argolid::VisType::NG_Zarr)

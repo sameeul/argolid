@@ -26,21 +26,7 @@ namespace argolid {
 void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const std::string& output_file, 
                                       const std::string& scale_key, const VisType v, BS::thread_pool& th_pool){
   
-  int num_dims, x_dim, y_dim;
-
-  if (v == VisType::Viv){ //5D file
-    x_dim = 4;
-    y_dim = 3;
-    num_dims = 5;
-  } else if (v == VisType::NG_Zarr ){ // 3D file
-    x_dim = 3;
-    y_dim = 2;
-    num_dims = 4;
-  } else if (v == VisType::PCNG ){ // 3D file
-    x_dim = 0;
-    y_dim = 1;
-    num_dims = 3;
-  }
+  const auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
 
   TENSORSTORE_CHECK_OK_AND_ASSIGN(auto store1, tensorstore::Open(GetOmeTiffSpecToRead(input_file),
                             tensorstore::OpenMode::open,
@@ -84,7 +70,7 @@ void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const st
     for(std::int64_t j=0; j<num_cols; ++j){
       std::int64_t x_start = j*chunk_shape[x_dim];
       std::int64_t x_end = std::min({(j+1)*chunk_shape[x_dim], image_width});
-      th_pool.push_task([&store1, &store2, x_start, x_end, y_start, y_end, x_dim, y_dim, v](){  
+      th_pool.push_task([&store1, &store2, x_start, x_end, y_start, y_end, x_dim=x_dim, y_dim=y_dim, v](){  
 
         auto array = tensorstore::AllocateArray({y_end-y_start, x_end-x_start},tensorstore::c_order,
                                 tensorstore::value_init, store1.dtype());

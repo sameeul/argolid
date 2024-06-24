@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include "../src/ome_tiff_to_chunked_converter.h"
+#include "../src/pyramid_view.h"
+
 #include "../src/chunked_pyramid_assembler.h"
 #include "../src/chunked_base_to_pyr_gen.h"
 #include "../src/ome_tiff_to_chunked_pyramid.h"
@@ -17,7 +19,7 @@
 #include "tensorstore/kvstore/kvstore.h"
 #include "tensorstore/open.h"
 using namespace argolid;
-
+/*
 void test_zarr_pyramid_writer(){
     std::string input_file = "/home/samee/Downloads/WT_Uninfected_top_right.tif";
     std::string output_file = "/home/samee/axle/data/bia_test";
@@ -208,6 +210,49 @@ void test_zarr_write(){
         tensorstore::Dims(1).ClosedInterval(0,0)).value();  
 }
 
+*/
+ void test_pyramid_view(){
+    std::string base_zarr_path{"/home/samee/axle_data/test_pyramid_view/test1"};
+    std::string pyramid_zarr_path{"/home/samee/axle_data/test_pyramid_view/test2"};
+    std::string image_coll_path{"/home/samee/axle_data/aaron_test_data"};
+    image_map test_data_map{
+        {"x0_y0_c0.ome.tiff", {0,0,0}},
+        {"x0_y1_c0.ome.tiff", {0,1,0}},
+        {"x0_y2_c0.ome.tiff", {0,2,0}},
+        {"x1_y0_c0.ome.tiff", {1,0,0}},
+        {"x1_y1_c0.ome.tiff", {1,1,0}},
+        {"x1_y2_c0.ome.tiff", {1,2,0}},
+        {"x0_y0_c1.ome.tiff", {0,0,1}},
+        {"x0_y1_c1.ome.tiff", {0,1,1}},
+        {"x0_y2_c1.ome.tiff", {0,2,1}},
+        {"x1_y0_c1.ome.tiff", {1,0,1}},
+        {"x1_y1_c1.ome.tiff", {1,1,1}},
+        {"x1_y2_c1.ome.tiff", {1,2,1}}
+    };
+
+    auto tmp = PyramidView(image_coll_path, base_zarr_path, pyramid_zarr_path, "test_image", test_data_map);
+    std::unordered_map<std::int64_t, DSType> channel_ds_config {{0,DSType::Mean},{1,DSType::Mean}};
+    tmp.AssembleBaseLevel(VisType::Viv);
+    tmp.GeneratePyramid(std::nullopt,VisType::Viv,256,channel_ds_config);
+
+    // image_map test_data_map_2{
+    //     {"x0_y0_c0.ome.tiff", {0,0,1}},
+    //     {"x0_y1_c0.ome.tiff", {0,1,1}},
+    //     {"x0_y2_c0.ome.tiff", {0,2,1}},
+    //     {"x1_y0_c0.ome.tiff", {1,0,1}},
+    //     {"x1_y1_c0.ome.tiff", {1,1,1}},
+    //     {"x1_y2_c0.ome.tiff", {1,2,1}},
+    //     {"x0_y0_c1.ome.tiff", {0,0,0}},
+    //     {"x0_y1_c1.ome.tiff", {0,1,0}},
+    //     {"x0_y2_c1.ome.tiff", {0,2,0}},
+    //     {"x1_y0_c1.ome.tiff", {1,0,0}},
+    //     {"x1_y1_c1.ome.tiff", {1,1,0}},
+    //     {"x1_y2_c1.ome.tiff", {1,2,0}}
+    // };
+    // tmp.GeneratePyramid(test_data_map_2,VisType::Viv,256,channel_ds_config);
+
+    // tmp.AssembleBaseLevel(VisType::Viv,test_data_map_2);
+ }
 
 int main(){
     std::cout<<"hello"<<std::endl;
@@ -215,8 +260,9 @@ int main(){
     //test_zarr_pyramid_assembler();
     //test_zarr_pyramid_gen();
     //test_ome_tiff_to_zarr_pyramid_gen();
-    test_ome_tiff_coll_to_zarr_pyramid_gen();
+    //test_ome_tiff_coll_to_zarr_pyramid_gen();
     //test_ome_tiff_coll_to_zarr_pyramid_gen_xml();
     //test_npc_write();
     //test_zarr_write();
+    test_pyramid_view();
 }

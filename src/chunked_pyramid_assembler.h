@@ -17,11 +17,7 @@ struct ImageSegment{
 
 };
 
-struct ImageInfo
-{
-  std::int64_t _full_image_height, _full_image_width, _chunk_size_x, _chunk_size_y, _num_channels;
-  std::string _data_type;
-};
+
 
 class OmeTiffCollToChunked{
 
@@ -35,6 +31,5 @@ public:
                   const std::string& scale_key, 
                   VisType v, 
                   BS::thread_pool& th_pool);
-    void GenerateOmeXML(const std::string& image_name, const std::string& output_file, ImageInfo& whole_image);
 };
 } // ns argolid

@@ -46,7 +46,7 @@ void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_chunked
     int resolution = 1; // this gets doubled in each level up
     auto input_spec = [v, &input_chunked_dir, &base_level_key](){
       if (v == VisType::NG_Zarr | v == VisType::Viv){
-        return GetZarrSpecToRead(input_chunked_dir, std::to_string(base_level_key));
+        return GetZarrSpecToRead(input_chunked_dir+"/"+std::to_string(base_level_key));
       } else if (v == VisType::PCNG){
         return GetNPCSpecToRead(input_chunked_dir, std::to_string(base_level_key));
       } else {// this will probably never happen
@@ -124,30 +124,10 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
                                                     std::unordered_map<std::int64_t, DSType>& channel_ds_config,
                                                     BS::thread_pool& th_pool)
 {
-    int num_dims, x_dim, y_dim, c_dim;
-
-    if (v == VisType::Viv){ //5D file
-        x_dim = 4;
-        y_dim = 3;
-        c_dim = 1;
-        num_dims = 5;
-    
-    } else if (v == VisType::NG_Zarr){ // 3D file
-        x_dim = 3;
-        y_dim = 2;
-        c_dim = 0;
-        num_dims = 4;
-    
-    } else if (v == VisType::PCNG ){ // 3D file
-        x_dim = 1;
-        y_dim = 0;
-        c_dim = 3;
-        num_dims = 3;
-    }
-
+    auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
     auto input_spec = [v, &input_file, &input_scale_key](){
       if (v == VisType::NG_Zarr | v == VisType::Viv){
-        return GetZarrSpecToRead(input_file, input_scale_key);
+        return GetZarrSpecToRead(input_file+"/"+input_scale_key);
       } else if (v == VisType::PCNG){
         return GetNPCSpecToRead(input_file, input_scale_key);
       } else {// this will probably never happen
@@ -233,7 +213,7 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
                 th_pool.push_task([ &store1, &store2, 
                                     prev_x_start, prev_x_end, prev_y_start, prev_y_end, 
                                     x_start, x_end, y_start, y_end, 
-                                    x_dim, y_dim, c_dim, c, v, downsampling_func_ptr](){  
+                                    x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, c, v, downsampling_func_ptr](){  
                     std::vector<T> read_buffer((prev_x_end-prev_x_start)*(prev_y_end-prev_y_start));
                     auto array = tensorstore::Array(read_buffer.data(), {prev_y_end-prev_y_start, prev_x_end-prev_x_start}, tensorstore::c_order);
 
