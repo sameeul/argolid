@@ -15,7 +15,7 @@
 #include <thread>
 #include <cstdlib>
 #include <optional>
-#include <filesystem>
+
 
 #include "tensorstore/tensorstore.h"
 #include "tensorstore/context.h"
@@ -25,7 +25,6 @@
 #include "tensorstore/kvstore/kvstore.h"
 #include "tensorstore/open.h"
 #include "filepattern/filepattern.h"
-#include <nlohmann/json.hpp>
 
 #include "pyramid_view.h"
 #include "chunked_base_to_pyr_gen.h"
@@ -33,9 +32,6 @@
 #include "pugixml.hpp"
 #include <plog/Log.h>
 #include "plog/Initializers/RollingFileInitializer.h"
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
-namespace fs = std::filesystem;
 
 using::tensorstore::Context;
 using::tensorstore::internal_zarr::ChooseBaseDType;
@@ -172,6 +168,9 @@ namespace argolid {
     chunk_shape[y_dim] = read_chunk_shape[y_dim];
     chunk_shape[x_dim] = read_chunk_shape[x_dim];
 
+    // chunk_shape[y_dim] = 128;
+    // chunk_shape[x_dim] = 128;
+
     auto open_mode = tensorstore::OpenMode::create;
     open_mode = open_mode | tensorstore::OpenMode::delete_existing;
     new_image_shape[c_dim] = base_image_shape[c_dim];
@@ -179,9 +178,9 @@ namespace argolid {
 
     auto output_spec = [v, &output_path, &new_image_shape, & chunk_shape, & base_store, this]() {
       if (v == VisType::NG_Zarr) {
-        return GetZarrSpecToWrite(output_path + "/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
+        return GetZarrSpecToWrite(output_path, new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
       } else if (v == VisType::Viv) {
-        return GetZarrSpecToWrite(output_path + "/0", new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
+        return GetZarrSpecToWrite(output_path, new_image_shape, chunk_shape, ChooseBaseDType(base_store.dtype()).value().encoded_dtype);
       }
     }();
 
@@ -194,36 +193,44 @@ namespace argolid {
 
     for (const auto & [file_name, location]: m) {
       // find where to read data from
-      const auto base_location = [file_name=file_name, this]() -> std::optional < std::tuple < std::uint32_t,
-        uint32_t, uint32_t >> {
-          if (auto search = base_image_map.find(file_name); search != base_image_map.end()) {
-            return std::optional {
-              search -> second
-            };
-          } else {
-            return std::nullopt;
-          }
-        }();
 
-      if (!base_location.has_value()) {
-        continue;
-      }
 
-      th_pool.push_task([ &base_store, &dest, file_name=file_name, location=location, base_location, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, this]() {
+      th_pool.push_task([ &base_store, &dest, file_name=file_name, location=location, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, this]() {
 
-        const auto & [x_grid_base, y_grid_base, c_grid_base] = base_location.value();
 
-        tensorstore::IndexTransform < > read_transform = tensorstore::IdentityTransform(base_store.domain());
+        // const auto base_location = [file_name=file_name, this]() -> std::optional < std::tuple < std::uint32_t,
+        //   uint32_t, uint32_t >> {
+        //     if (auto search = base_image_map.find(file_name); search != base_image_map.end()) {
+        //       return std::optional {
+        //         search -> second
+        //       };
+        //     } else {
+        //       return std::nullopt;
+        //     }
+        //   }();
 
-        if (v == VisType::NG_Zarr) {
-          read_transform = (std::move(read_transform) | tensorstore::Dims(c_dim).SizedInterval(c_grid_base, 1) |
-            tensorstore::Dims(y_dim).SizedInterval(y_grid_base * base_image._chunk_size_y, base_image._chunk_size_y) |
-            tensorstore::Dims(x_dim).SizedInterval(x_grid_base * base_image._chunk_size_x, base_image._chunk_size_x)).value();
-        } else if (v == VisType::Viv) {
-          read_transform = (std::move(read_transform) | tensorstore::Dims(c_dim).SizedInterval(c_grid_base, 1) |
-            tensorstore::Dims(y_dim).SizedInterval(y_grid_base * base_image._chunk_size_y, base_image._chunk_size_y) |
-            tensorstore::Dims(x_dim).SizedInterval(x_grid_base * base_image._chunk_size_x, base_image._chunk_size_x)).value();
-        }
+        // if (!base_location.has_value()) {
+        //   return;
+        // }
+        // const auto & [x_grid_base, y_grid_base, c_grid_base] = base_location.value();
+
+        TENSORSTORE_CHECK_OK_AND_ASSIGN(auto source, tensorstore::Open(
+          GetOmeTiffSpecToRead(image_coll_path + "/" + file_name),
+          tensorstore::OpenMode::open,
+          tensorstore::ReadWriteMode::read).result());
+        PLOG_INFO << "Opening " << file_name;
+
+        // tensorstore::IndexTransform < > read_transform = tensorstore::IdentityTransform(base_store.domain());
+
+        // if (v == VisType::NG_Zarr) {
+        //   read_transform = (std::move(read_transform) | tensorstore::Dims(c_dim).SizedInterval(c_grid_base, 1) |
+        //     tensorstore::Dims(y_dim).SizedInterval(y_grid_base * base_image._chunk_size_y, base_image._chunk_size_y) |
+        //     tensorstore::Dims(x_dim).SizedInterval(x_grid_base * base_image._chunk_size_x, base_image._chunk_size_x)).value();
+        // } else if (v == VisType::Viv) {
+        //   read_transform = (std::move(read_transform) | tensorstore::Dims(c_dim).SizedInterval(c_grid_base, 1) |
+        //     tensorstore::Dims(y_dim).SizedInterval(y_grid_base * base_image._chunk_size_y, base_image._chunk_size_y) |
+        //     tensorstore::Dims(x_dim).SizedInterval(x_grid_base * base_image._chunk_size_x, base_image._chunk_size_x)).value();
+        // }
 
         auto array = tensorstore::AllocateArray({
             base_image._chunk_size_y,
@@ -231,8 +238,15 @@ namespace argolid {
           }, tensorstore::c_order,
           tensorstore::value_init, base_store.dtype());
 
+        auto image_shape = source.domain().shape();
+        auto image_width = image_shape[4];
+        auto image_height = image_shape[3];
+        tensorstore::Read(source |
+          tensorstore::Dims(3).ClosedInterval(0, image_height - 1) |
+          tensorstore::Dims(4).ClosedInterval(0, image_width - 1),
+          array).value();
         // initiate a read
-        tensorstore::Read(base_store | read_transform, array).value();
+        // tensorstore::Read(base_store | read_transform, array).value();
 
         const auto & [x_grid, y_grid, c_grid] = location;
 
@@ -271,25 +285,9 @@ namespace argolid {
     }();
 
     if (map.has_value()){
-      ReAssembleBaseLevelWithNewMap(v,map.value(),output_zarr_path);
+      ReAssembleBaseLevelWithNewMap(v,map.value(),output_zarr_path+ "/0");
     } else {
-      // copy base level zarr file
-        fs::path destination{output_zarr_path+"/0"};
-        if (!fs::exists(destination)) {
-            fs::create_directories(destination);
-        }
-
-        // Iterate over files in the source directory
-        fs::path source{base_zarr_path};
-        for (const auto& entry : fs::directory_iterator(source)) {
-            const auto& path = entry.path();
-            auto destPath = destination / path.filename();
-
-            // Copy file
-            if (fs::is_regular_file(path)) {
-                fs::copy_file(path, destPath, fs::copy_options::overwrite_existing);
-            }
-        }
+      CopyBaseLevelZarrFile(base_zarr_path, output_zarr_path+"/0");
     }
 
     // generate pyramid

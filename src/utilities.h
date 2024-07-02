@@ -58,6 +58,6 @@ inline std::tuple<int,int,int,int> GetZarrParams(VisType v){
     return {0,1,3,3};
   }
 }
-
+void CopyBaseLevelZarrFile(const std::string& source_path, const std::string& dest_path);
 std::optional<std::tuple<std::uint32_t, std::uint32_t>> GetTiffDims (const std::string filename);
 } // ns argolid

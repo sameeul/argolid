@@ -346,4 +346,25 @@ std::optional<std::tuple<std::uint32_t, std::uint32_t>> GetTiffDims (const std::
 
 }
 
+void CopyBaseLevelZarrFile(const std::string& source_path, const std::string& dest_path)
+{
+    fs::path destination{dest_path};
+    if (!fs::exists(destination)) {
+        fs::create_directories(destination);
+    }
+
+    // Iterate over files in the source directory
+    fs::path source{source_path};
+    for (const auto& entry : fs::directory_iterator(source)) {
+        const auto& path = entry.path();
+        auto destPath = destination / path.filename();
+
+        // Copy file
+        if (fs::is_regular_file(path)) {
+            fs::copy_file(path, destPath, fs::copy_options::overwrite_existing);
+        }
+    }
+}
+
+
 } // ns argolid

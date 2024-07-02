@@ -23,21 +23,28 @@ class PyramidGenerartor:
         self._pyr_generator.SetLogLevel(level)
 
 class PyramidView:
-    def __init__(self, image_path, pyramid_zarr_loc, output_image_name,  image_map, vis_type, log_level = None) -> None:
+    def __init__(self, image_path, pyramid_zarr_loc, output_image_name,  image_map, metadata_dict, log_level = None) -> None:
         base_zarr_loc = pyramid_zarr_loc + "/base_zarr_loc"
         self._pyr_view = PyramidViewCPP(image_path, base_zarr_loc, pyramid_zarr_loc, output_image_name, image_map)
         self.vis_types_dict ={ "NG_Zarr" : VisType.NG_Zarr, "Viv" : VisType.Viv}
         self.ds_types_dict = {"mean" : DSType.Mean, "mode_max" : DSType.Mode_Max, "mode_min" : DSType.Mode_Min}
-        self._pyr_view.AssembleBaseLevel(self.vis_types_dict[vis_type])
+        if "minimum_dimension" in metadata_dict:
+            self._min_dim = metadata_dict["minimum_dimension"]
+        else:
+            self._min_dim = 512
+        if "output_type" in metadata_dict:
+            self._vis_type = self.vis_types_dict[metadata_dict["output_type"]]
+        else:
+            self._vis_type = VisType.Viv
+        self._channel_downsample_config = {}
+        if "downsampling_config" in metadata_dict:
+            for c in metadata_dict["downsampling_config"]:
+                self._channel_downsample_config[c] = self.ds_types_dict[metadata_dict["downsampling_config"][c]]
 
-    def generate_pyramid(self, min_dim, vis_type, ds_dict = {}):
-        channel_ds_dict = {}
-        for c in ds_dict:
-            channel_ds_dict[c] = self.ds_types_dict[ds_dict[c]]
-        self._pyr_view.GeneratePyramid(None, self.vis_types_dict[vis_type], min_dim, channel_ds_dict )
+        self._pyr_view.AssembleBaseLevel(self._vis_type)
 
-    def regenerate_pyramid(self, image_map, min_dim, vis_type, ds_dict = {}):
-        channel_ds_dict = {}
-        for c in ds_dict:
-            channel_ds_dict[c] = self.ds_types_dict[ds_dict[c]]
-        self._pyr_view.GeneratePyramid(image_map, self.vis_types_dict[vis_type], min_dim, channel_ds_dict )
+    def generate_pyramid(self):
+        self._pyr_view.GeneratePyramid(None, self._vis_type, self._min_dim, self._channel_downsample_config)
+
+    def regenerate_pyramid(self, image_map):
+        self._pyr_view.GeneratePyramid(image_map, self._vis_type, self._min_dim, self._channel_downsample_config)
