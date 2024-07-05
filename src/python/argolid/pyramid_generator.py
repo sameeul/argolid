@@ -23,9 +23,10 @@ class PyramidGenerartor:
         self._pyr_generator.SetLogLevel(level)
 
 class PyramidView:
-    def __init__(self, image_path, pyramid_zarr_loc, output_image_name,  image_map, metadata_dict, log_level = None) -> None:
-        base_zarr_loc = pyramid_zarr_loc + "/base_zarr_loc"
-        self._pyr_view = PyramidViewCPP(image_path, base_zarr_loc, pyramid_zarr_loc, output_image_name, image_map)
+    def __init__(self, image_path, pyramid_zarr_loc, output_image_name, metadata_dict, log_level = None) -> None:
+        x_border = (lambda d: d["x_spacing"] if "x_spacing" in d else 0)(metadata_dict)
+        y_border = (lambda d: d["y_spacing"] if "y_spacing" in d else 0)(metadata_dict)
+        self._pyr_view = PyramidViewCPP(image_path, pyramid_zarr_loc, output_image_name, x_border, y_border)
         self.vis_types_dict ={ "NG_Zarr" : VisType.NG_Zarr, "Viv" : VisType.Viv}
         self.ds_types_dict = {"mean" : DSType.Mean, "mode_max" : DSType.Mode_Max, "mode_min" : DSType.Mode_Min}
         if "minimum_dimension" in metadata_dict:
@@ -41,10 +42,6 @@ class PyramidView:
             for c in metadata_dict["downsampling_config"]:
                 self._channel_downsample_config[c] = self.ds_types_dict[metadata_dict["downsampling_config"][c]]
 
-        self._pyr_view.AssembleBaseLevel(self._vis_type)
 
-    def generate_pyramid(self):
-        self._pyr_view.GeneratePyramid(None, self._vis_type, self._min_dim, self._channel_downsample_config)
-
-    def regenerate_pyramid(self, image_map):
+    def generate_pyramid(self, image_map):
         self._pyr_view.GeneratePyramid(image_map, self._vis_type, self._min_dim, self._channel_downsample_config)

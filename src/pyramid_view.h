@@ -5,7 +5,8 @@
 #include <optional>
 #include "utilities.h"
 #include "BS_thread_pool.hpp"
-
+#include <plog/Log.h>
+#include "plog/Initializers/RollingFileInitializer.h"
 namespace argolid{
 
 using image_map = std::unordered_map<std::string, std::tuple<std::uint32_t,uint32_t,uint32_t>>;
@@ -13,29 +14,31 @@ using image_map = std::unordered_map<std::string, std::tuple<std::uint32_t,uint3
 class PyramidView{
 public:
     PyramidView(std::string_view image_path, 
-                std::string base_zarr_loc,
-                std::string pyramid_zarr_loc,
-                std::string output_image_name,
-                const image_map& map):
+                std::string_view pyramid_zarr_loc,
+                std::string_view output_image_name,
+                std::uint16_t x_spacing,
+                std::uint16_t y_spacing):
         image_coll_path(image_path), 
-        base_zarr_path(base_zarr_loc),
         pyramid_zarr_path(pyramid_zarr_loc),
         image_name(output_image_name),
-        base_image_map(map)
-        {}
+        x_spacing(x_spacing),
+        y_spacing(y_spacing)
+        {
+            auto log_file_name = "argolid_" + argolid::GetUTCString() + ".log";
+            plog::init(plog::none, log_file_name.c_str());
+            plog::get()->setMaxSeverity(plog::Severity(4));
+        }
     
-    void AssembleBaseLevel(VisType v);
-    void ReAssembleBaseLevelWithNewMap(VisType v, const image_map& m, const std::string& output_path);
-    void GeneratePyramid(std::optional<image_map> map, 
+    void AssembleBaseLevel(VisType v, const image_map& map, const std::string& zarr_array_path);
+    void GeneratePyramid(const image_map& map, 
                                     VisType v, 
                                     int min_dim,  
-                                    std::unordered_map<std::int64_t, DSType>& channel_ds_config);
+                                    const std::unordered_map<std::int64_t, DSType>& channel_ds_config);
 
 
 private:
-    std::string image_coll_path, base_zarr_path, pyramid_zarr_path, image_name, pyramid_root;
-    std::uint16_t max_level;
-    image_map base_image_map;
+    std::string image_coll_path, pyramid_zarr_path, image_name;
+    std::uint16_t x_spacing, y_spacing;
     BS::thread_pool th_pool;
     ImageInfo base_image;
 };
