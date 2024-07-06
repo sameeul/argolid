@@ -5,8 +5,6 @@
 #include <optional>
 #include "utilities.h"
 #include "BS_thread_pool.hpp"
-#include <plog/Log.h>
-#include "plog/Initializers/RollingFileInitializer.h"
 namespace argolid{
 
 using image_map = std::unordered_map<std::string, std::tuple<std::uint32_t,uint32_t,uint32_t>>;
@@ -23,11 +21,7 @@ public:
         image_name(output_image_name),
         x_spacing(x_spacing),
         y_spacing(y_spacing)
-        {
-            auto log_file_name = "argolid_" + argolid::GetUTCString() + ".log";
-            plog::init(plog::none, log_file_name.c_str());
-            plog::get()->setMaxSeverity(plog::Severity(4));
-        }
+        {}
     
     void AssembleBaseLevel(VisType v, const image_map& map, const std::string& zarr_array_path);
     void GeneratePyramid(const image_map& map, 

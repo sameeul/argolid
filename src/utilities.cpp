@@ -8,6 +8,7 @@
 #include "pugixml.hpp"
 #include <nlohmann/json.hpp>
 #include "utilities.h"
+#include <thread>
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -21,8 +22,8 @@ tensorstore::Spec GetOmeTiffSpecToRead(const std::string& filename){
                             },
                             {"context", {
                               {"cache_pool", {{"total_bytes_limit", 1000000000}}},
-                              {"data_copy_concurrency", {{"limit", 8}}},
-                              {"file_io_concurrency", {{"limit", 8}}},
+                              {"data_copy_concurrency", {{"limit", std::thread::hardware_concurrency()}}},
+                              {"file_io_concurrency", {{"limit", std::thread::hardware_concurrency()}}},
                             }},
                             }).value();
 }
@@ -37,8 +38,8 @@ tensorstore::Spec GetZarrSpecToWrite(   const std::string& filename,
                             },
                             {"context", {
                               {"cache_pool", {{"total_bytes_limit", 1000000000}}},
-                              {"data_copy_concurrency", {{"limit", 8}}},
-                              {"file_io_concurrency", {{"limit", 8}}},
+                              {"data_copy_concurrency", {{"limit", std::thread::hardware_concurrency()}}},
+                              {"file_io_concurrency", {{"limit", std::thread::hardware_concurrency()}}},
                             }},
                             {"metadata", {
                                           {"zarr_format", 2},
@@ -83,8 +84,8 @@ tensorstore::Spec GetNPCSpecToWrite(const std::string& filename,
                               },
                               {"context", {
                                 {"cache_pool", {{"total_bytes_limit", 1000000000}}},
-                                {"data_copy_concurrency", {{"limit", 8}}},
-                                {"file_io_concurrency", {{"limit", 8}}},
+                                {"data_copy_concurrency", {{"limit", std::thread::hardware_concurrency()}}},
+                                {"file_io_concurrency", {{"limit", std::thread::hardware_concurrency()}}},
                               }},
                               {"multiscale_metadata", {
                                             {"data_type", dtype},
@@ -106,8 +107,8 @@ tensorstore::Spec GetNPCSpecToWrite(const std::string& filename,
                         },
                         {"context", {
                           {"cache_pool", {{"total_bytes_limit", 1000000000}}},
-                          {"data_copy_concurrency", {{"limit", 8}}},
-                          {"file_io_concurrency", {{"limit", 8}}},
+                          {"data_copy_concurrency", {{"limit", std::thread::hardware_concurrency()}}},
+                          {"file_io_concurrency", {{"limit", std::thread::hardware_concurrency()}}},
                         }},
                         {"scale_metadata", {
                                       {"encoding", "raw"},
