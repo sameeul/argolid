@@ -13,7 +13,7 @@ PYBIND11_MODULE(libargolid, m) {
     .def("SetLogLevel", &argolid::OmeTiffToChunkedPyramid::SetLogLevel) ;
 
     py::class_<argolid::PyramidView, std::shared_ptr<argolid::PyramidView>>(m, "PyramidViewCPP") \
-    .def(py::init<std::string_view, std::string, std::string, std::string, argolid::image_map&>()) \
+    .def(py::init<std::string_view, std::string_view, std::string_view, std::uint16_t, std::uint16_t>()) \
     .def("GeneratePyramid", &argolid::PyramidView::GeneratePyramid) \
     .def("AssembleBaseLevel", &argolid::PyramidView::AssembleBaseLevel) ;
 

@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import sysconfig
 import versioneer
 import platform
 import subprocess
@@ -102,6 +101,7 @@ setup(
     package_dir={"": "src/python"},
     ext_modules=[CMakeExtension("argolid/libargolid")],
     test_suite="tests",
+    install_requires=["pydantic"],
     zip_safe=False,
     python_requires=">=3.8",
 )
