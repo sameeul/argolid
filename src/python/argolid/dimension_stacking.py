@@ -68,30 +68,42 @@ class PyramidGenerator3D:
 
         self._zarr_array = ts.open(spec).result()
 
+
+    def write_image_stack_async(self):
+        self.init_base_zarr_file()
+        asyncio.run(self.write_image_stack())
+
     async def write_image_stack(self):
-        write_futures = []
         count = 0
         for file in self._fps():
             file_name = file[1][0]
+            t = 0
+            c = 0
+            z = 0
             with BioReader(file_name) as br:
                 if self._group_by == "c":
-                    write_futures.append(asyncio.ensure_future(self._zarr_array[0,count:count+1,0,0:self._Y, 0:self._X].write(br[:].squeeze()))) 
+                    c = count
                 elif self._group_by == "t":
-                    write_futures.append(asyncio.ensure_future(self._zarr_array[count:count+1,0,0,0:self._Y, 0:self._X].write(br[:].squeeze())))
+                    c = count
                 elif self._group_by == "z":
-                    write_futures.append(asyncio.ensure_future(self._zarr_array[0,0,count:count+1,0:self._Y, 0:self._X].write(br[:].squeeze())))
+                    z = count
                 else:
                     pass
+                for y in range(0, br.Y, CHUNK_SIZE):
+                    y_max = min([br.Y, y + CHUNK_SIZE])
+                    for x in range(0, br.X, CHUNK_SIZE):
+                        x_max = min([br.X, x + CHUNK_SIZE])
+
+                        await self._zarr_array[t,c,z,y:y_max, x:x_max].write(br[y:y_max, x:x_max,0,0,0].squeeze())
+
             count += 1
-        await asyncio.wait(write_futures)
-        # for future in write_futures:
-        #     future.result()
 
     def write_image_stack_2(self):
         write_futures = []
         count = 0
         for file in self._fps():
             file_name = file[1][0]
+
             with BioReader(file_name) as br:
                 if self._group_by == "c":
                     write_futures.append(self._zarr_array[0,count:count+1,0,0:self._Y, 0:self._X].write(br[:].squeeze())) 
@@ -101,6 +113,8 @@ class PyramidGenerator3D:
                     write_futures.append(self._zarr_array[0,0,count:count+1,0:self._Y, 0:self._X].write(br[:].squeeze()))
                 else:
                     pass
+
+
             count += 1
 
         for future in write_futures:
