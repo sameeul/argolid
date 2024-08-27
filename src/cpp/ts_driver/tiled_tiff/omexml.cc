@@ -101,6 +101,5 @@ std::string OmeXml::ToJsonStr(){
     
     oss.seekp(-1, oss.cur);
     oss << "}"; //finish json 
-    //std::cout << oss.str() << std::endl;
     return oss.str();
 }
