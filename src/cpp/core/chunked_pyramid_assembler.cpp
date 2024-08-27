@@ -1,5 +1,5 @@
 #include "chunked_pyramid_assembler.h"
-#include "utilities.h"
+#include "../utilities/utilities.h"
 #include "pugixml.hpp"
 #include "tiffio.h"
 #include <plog/Log.h>

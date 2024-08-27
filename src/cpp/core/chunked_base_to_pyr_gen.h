@@ -2,8 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include "BS_thread_pool.hpp"
-#include "utilities.h"
-
+#include "../utilities/utilities.h"
 namespace argolid{
 class ChunkedBaseToPyramid{
 public:

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "utilities.h"
+#include "../utilities/utilities.h"
 #include "BS_thread_pool.hpp"
 
 namespace argolid{

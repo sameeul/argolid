@@ -28,7 +28,7 @@
 
 #include "pyramid_view.h"
 #include "chunked_base_to_pyr_gen.h"
-#include "utilities.h"
+#include "../utilities/utilities.h"
 #include "pugixml.hpp"
 #include <plog/Log.h>
 #include "plog/Initializers/RollingFileInitializer.h"

@@ -1,6 +1,5 @@
 #include "ome_tiff_to_chunked_converter.h"
-#include "utilities.h"
-
+#include "../utilities/utilities.h"
 #include <string>
 #include <stdint.h>
 #include <iostream>

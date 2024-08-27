@@ -1,4 +1,4 @@
-#include "../../src/ts_driver/tiled_tiff/omexml.h"
+#include "omexml.h"
 #include <tiffio.h>
 #include <regex>
 #include <stddef.h>
@@ -334,6 +334,9 @@ struct ReadTask {
         }
       }
     }
+    // auto time2 = std::chrono::steady_clock::now();
+    // std::chrono::duration<double> elapsed_time = time2 - time1;
+    //std::cout<<"Time Reading Tiff=" << elapsed_time.count()<< std::endl;
     return read_result;
   }
 };
