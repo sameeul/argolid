@@ -1,4 +1,4 @@
-#include "../../src/ts_driver/tiled_tiff/omexml.h"
+#include "omexml.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>

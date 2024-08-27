@@ -6,7 +6,7 @@
 #include "ome_tiff_to_chunked_converter.h"
 #include "chunked_pyramid_assembler.h"
 #include "chunked_base_to_pyr_gen.h"
-#include "utilities.h"
+#include "../utilities/utilities.h"
 #include "BS_thread_pool.hpp"
 #include <plog/Log.h>
 #include "plog/Initializers/RollingFileInitializer.h"

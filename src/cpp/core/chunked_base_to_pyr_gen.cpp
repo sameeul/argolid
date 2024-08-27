@@ -1,6 +1,6 @@
 #include "chunked_base_to_pyr_gen.h"
-#include "downsample.h"
-#include "utilities.h"
+#include "../utilities/downsample.h"
+#include "../utilities/utilities.h"
 #include <plog/Log.h>
 #include "plog/Initializers/RollingFileInitializer.h"
 
