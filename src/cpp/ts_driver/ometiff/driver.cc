@@ -1,5 +1,5 @@
 
-#include "../../src/ts_driver/ometiff/metadata.h"
+#include "metadata.h"
 
 #include "tensorstore/driver/driver.h"
 #include "absl/status/status.h"

@@ -1,5 +1,5 @@
 
-#include "../../src/ts_driver/ometiff/metadata.h"
+#include "metadata.h"
 
 // ToDo - Clean up headers
 #include <iostream>

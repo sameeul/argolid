@@ -1,6 +1,6 @@
-#include "../ome_tiff_to_chunked_pyramid.h"
-#include "../pyramid_view.h"
-#include "../utilities.h"
+#include "../core/ome_tiff_to_chunked_pyramid.h"
+#include "../core/pyramid_view.h"
+#include "../utilities/utilities.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 namespace py = pybind11;

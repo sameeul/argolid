@@ -2,7 +2,7 @@
 
 #include <string>
 #include "BS_thread_pool.hpp"
-#include "utilities.h"
+#include "../utilities/utilities.h"
 namespace argolid {
 class OmeTiffToChunkedConverter{
 
