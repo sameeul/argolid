@@ -1,42 +1,14 @@
 from bfio import BioReader
 import filepattern as fp
 import os
-import re
 import tensorstore as ts
-import json
 import numpy as np
-import asyncio
 import concurrent.futures
-import multiprocessing
 from multiprocessing import get_context
 
 
 CHUNK_SIZE = 1024
 
-def layer_writer(args):
-    input_file = args[0] 
-    zarr_spec = args[1]
-    z = args[2] 
-    c = args[3] 
-    t = args[4]
-
-    # print(zarr_spec)
-    zarr_array = ts.open(zarr_spec).result()
-    # print(zarr_array)
-    write_futures = []
-    try:
-        br = BioReader(input_file, backend="tensorstore")
-        print(input_file)
-        for y in range(0, br.Y, CHUNK_SIZE):
-            y_max = min([br.Y, y + CHUNK_SIZE])
-            for x in range(0, br.X, CHUNK_SIZE):
-                x_max = min([br.X, x + CHUNK_SIZE])
-                write_futures.append(zarr_array[t,c,z,y:y_max, x:x_max].write(br[y:y_max, x:x_max,0,0,0].squeeze()))
-
-        for future in write_futures:
-                future.result()
-    except Exception as e:
-        print(f"Caught an exception for item : {e}")
 
 
 class VolumeGenerator:
@@ -97,8 +69,8 @@ class VolumeGenerator:
                 },
             'context': {
                 'cache_pool': {},
-                'data_copy_concurrency': {"limit": os.cpu_count()},
-                'file_io_concurrency': {"limit": os.cpu_count()},
+                'data_copy_concurrency': {"limit": os.cpu_count()//2},
+                'file_io_concurrency': {"limit": os.cpu_count()//2},
                 'file_io_sync': False,
                 },
     
@@ -106,22 +78,33 @@ class VolumeGenerator:
 
 
 
+    def layer_writer(self, args):
+        input_file = args[0] 
+        zarr_spec = args[1]
+        z = args[2] 
+        c = args[3] 
+        t = args[4]
+
+        zarr_array = ts.open(zarr_spec).result()
+        write_futures = []
+        try:
+            br = BioReader(input_file, backend="tensorstore")
+            print(input_file)
+            for y in range(0, br.Y, CHUNK_SIZE):
+                y_max = min([br.Y, y + CHUNK_SIZE])
+                for x in range(0, br.X, CHUNK_SIZE):
+                    x_max = min([br.X, x + CHUNK_SIZE])
+                    write_futures.append(zarr_array[t,c,z,y:y_max, x:x_max].write(br[y:y_max, x:x_max,0,0,0].squeeze()))
+
+            for future in write_futures:
+                    future.result()
+        except Exception as e:
+            print(f"Caught an exception for item : {e}")
+
+
     def generate_volume(self):
         self.init_base_zarr_file()
         self.write_image_stack()
-
-
-    # def copy_single_layer(self, file_name, z,c,t):
-    #     write_futures = []
-    #     with BioReader(file_name, backend="tensorstore") as br:
-    #         for y in range(0, br.Y, CHUNK_SIZE):
-    #             y_max = min([br.Y, y + CHUNK_SIZE])
-    #             for x in range(0, br.X, CHUNK_SIZE):
-    #                 x_max = min([br.X, x + CHUNK_SIZE])
-    #                 write_futures.append(self._zarr_array[t,c,z,y:y_max, x:x_max].write(br[y:y_max, x:x_max,0,0,0].squeeze()))
-
-    #     for future in write_futures:
-    #         future.result()
 
     def write_image_stack(self):
         count = 0
@@ -139,8 +122,8 @@ class VolumeGenerator:
             
             arg_list.append((file_name, self._zarr_spec, z, c, t))
             count += 1
-        with concurrent.futures.ProcessPoolExecutor(max_workers=1,mp_context=get_context("spawn")) as executor:
-            executor.map(layer_writer, arg_list) 
+        with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count()//2, mp_context=get_context("spawn")) as executor:
+            executor.map(self.layer_writer, arg_list) 
 
 class PyramidGenerator3D:
     def __init__(self, zarr_loc_dir, base_level):
@@ -196,3 +179,8 @@ class PyramidGenerator3D:
 
         for future in write_futures:
             future.result()
+
+    def generate_pyramid(self):
+        num_levels = 6 # for now
+        with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count()//2, mp_context=get_context("spawn")) as executor:
+            executor.map(self.downsample_pyramid, range(num_levels)) 
