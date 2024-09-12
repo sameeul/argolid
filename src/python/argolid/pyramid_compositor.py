@@ -8,7 +8,7 @@ import numpy as np
 import ome_types
 import tensorstore as ts
 
-CHUNK_SIZE = 1024
+CHUNK_SIZE: int = 1024
 
 OME_DTYPE = {
     "uint8": ome_types.model.PixelType.UINT8,
@@ -22,7 +22,7 @@ OME_DTYPE = {
 }
 
 
-def get_zarr_read_spec(file_path):
+def get_zarr_read_spec(file_path: str) -> dict:
     return {
         "driver": "zarr",
         "kvstore": {
@@ -39,7 +39,9 @@ def get_zarr_read_spec(file_path):
     }
 
 
-def get_zarr_write_spec(file_path, chunk_size, base_shape, dtype):
+def get_zarr_write_spec(
+    file_path: str, chunk_size: int, base_shape: tuple, dtype: str
+) -> dict:
     return {
         "driver": "zarr",
         "kvstore": {
@@ -66,14 +68,22 @@ def get_zarr_write_spec(file_path, chunk_size, base_shape, dtype):
 
 
 class PyramidCompositor:
-    def __init__(self, well_pyramid_loc, out_dir, pyramid_file_name) -> None:
-        self._well_pyramid_loc = well_pyramid_loc
-        self._tile_cache = None
-        self._pyramid_file_name = f"{out_dir}/{pyramid_file_name}"
-        self._ome_metadata_file = f"{out_dir}/{pyramid_file_name}/METADATA.ome.xml"
-        self._well_map = None
+    def __init__(
+        self, well_pyramid_loc: str, out_dir: str, pyramid_file_name: str
+    ) -> None:
+        self._well_pyramid_loc: str = well_pyramid_loc
+        self._tile_cache: set = set()
+        self._pyramid_file_name: str = f"{out_dir}/{pyramid_file_name}"
+        self._ome_metadata_file: str = f"{out_dir}/{pyramid_file_name}/METADATA.ome.xml"
+        self._well_map: dict = None
+        self._plate_image_shapes: dict = {}
+        self._zarr_arrays: dict = {}
+        self._well_image_shapes: dict = {}
+        self._pyramid_levels: int = None
+        self._image_dtype: np.dtype = None
+        self._num_channels: int = None
 
-    def _create_xml(self) -> ome_types.model.OME:
+    def _create_xml(self) -> None:
         ome_metadata = ome_types.model.OME()
         ome_metadata.images.append(
             ome_types.model.Image(
@@ -102,9 +112,9 @@ class PyramidCompositor:
         with open(self._ome_metadata_file, "w") as fw:
             fw.write(str(ome_metadata.to_xml()))
 
-    def _create_zattr_file(self):
-        attr_dict = {}
-        multiscale_metadata = []
+    def _create_zattr_file(self) -> None:
+        attr_dict: dict = {}
+        multiscale_metadata: list = []
         for key in self._plate_image_shapes:
             multiscale_metadata.append({"path": str(key)})
         attr_dict["datasets"] = multiscale_metadata
@@ -117,7 +127,7 @@ class PyramidCompositor:
         with open(f"{self._pyramid_file_name}/data.zarr/0/.zattrs", "w") as json_file:
             json.dump(final_attr_dict, json_file)
 
-    def _create_zgroup_file(self):
+    def _create_zgroup_file(self) -> None:
         zgroup_dict = {"zarr_format": 2}
 
         with open(f"{self._pyramid_file_name}/data.zarr/0/.zgroup", "w") as json_file:
@@ -126,7 +136,7 @@ class PyramidCompositor:
         with open(f"{self._pyramid_file_name}/data.zarr/.zgroup", "w") as json_file:
             json.dump(zgroup_dict, json_file)
 
-    def _create_auxilary_files(self):
+    def _create_auxilary_files(self) -> None:
         # create ome xml metadata
         self._create_xml()
         # create zattrs file
@@ -134,7 +144,9 @@ class PyramidCompositor:
         # create zgroup file
         self._create_zgroup_file()
 
-    def _write_tile_data(self, level, channel, y_index, x_index):
+    def _write_tile_data(
+        self, level: int, channel: int, y_index: int, x_index: int
+    ) -> None:
         y_range = [
             y_index * CHUNK_SIZE,
             min((y_index + 1) * CHUNK_SIZE, self._zarr_arrays[level].shape[3]),
@@ -193,7 +205,7 @@ class PyramidCompositor:
             0, channel, 0, y_range[0] : y_range[1], x_range[0] : x_range[1]
         ].write(assembled_image).result()
 
-    def set_well_map(self, well_map):
+    def set_well_map(self, well_map: dict) -> None:
         self._well_map = well_map
         self._well_image_shapes = {}
         for coord in well_map:
@@ -268,7 +280,7 @@ class PyramidCompositor:
 
         self._create_auxilary_files()
 
-    def reset_composition(self):
+    def reset_composition(self) -> None:
         shutil.rmtree(self._pyramid_file_name)
         self._well_map = None
         self._plate_image_shapes = None
@@ -276,7 +288,9 @@ class PyramidCompositor:
         self._plate_image_shapes = {}
         self._zarr_arrays = {}
 
-    def get_tile_data(self, level, channel, y_index, x_index):
+    def get_tile_data(
+        self, level: int, channel: int, y_index: int, x_index: int
+    ) -> None:
 
         if self._well_map is None:
             print("No well map is set. Unable to generate pyramid")
