@@ -23,6 +23,15 @@ OME_DTYPE = {
 
 
 def get_zarr_read_spec(file_path: str) -> dict:
+    """
+    Returns a dictionary containing the specification for reading a Zarr file.
+
+    Args:
+        file_path (str): The path to the Zarr file.
+
+    Returns:
+        dict: A dictionary containing the specification for reading the Zarr file.
+    """
     return {
         "driver": "zarr",
         "kvstore": {
@@ -42,6 +51,18 @@ def get_zarr_read_spec(file_path: str) -> dict:
 def get_zarr_write_spec(
     file_path: str, chunk_size: int, base_shape: tuple, dtype: str
 ) -> dict:
+    """
+    Returns a dictionary containing the specification for writing a Zarr file.
+
+    Args:
+        file_path (str): The path to the Zarr file.
+        chunk_size (int): The size of the chunks in the Zarr file.
+        base_shape (tuple): The base shape of the Zarr file.
+        dtype (str): The data type of the Zarr file.
+
+    Returns:
+        dict: A dictionary containing the specification for writing the Zarr file.
+    """
     return {
         "driver": "zarr",
         "kvstore": {
@@ -55,22 +76,33 @@ def get_zarr_write_spec(
             "shape": base_shape,
             "chunks": [1, 1, 1, chunk_size, chunk_size],
             "dtype": np.dtype(dtype).str,
-            # "dimension_separator" : "/",
-            # "compressor" : {"id": "blosc", "cname": "zstd", "clevel": 1, "shuffle": 1, "blocksize": 0},
+            "compressor" : {"id": "blosc", "cname": "zstd", "clevel": 1, "shuffle": 1, "blocksize": 0},
         },
         "context": {
             "cache_pool": {},
-            "data_copy_concurrency": {"limit": os.cpu_count()},
-            "file_io_concurrency": {"limit": os.cpu_count()},
+            "data_copy_concurrency": {"limit": os.cpu_count()//2},
+            "file_io_concurrency": {"limit": os.cpu_count()//2},
             "file_io_sync": False,
         },
     }
 
 
 class PyramidCompositor:
+    """
+    A class for compositing well images into a pyramid structure.
+    """
+
     def __init__(
         self, well_pyramid_loc: str, out_dir: str, pyramid_file_name: str
     ) -> None:
+        """
+        Initializes the PyramidCompositor object.
+
+        Args:
+            well_pyramid_loc (str): The location of the well pyramids.
+            out_dir (str): The output directory for the composed zarr pyramid file.
+            pyramid_file_name (str): The name of the zarr pyramid file.
+        """
         self._well_pyramid_loc: str = well_pyramid_loc
         self._tile_cache: set = set()
         self._pyramid_file_name: str = f"{out_dir}/{pyramid_file_name}"
@@ -84,6 +116,9 @@ class PyramidCompositor:
         self._num_channels: int = None
 
     def _create_xml(self) -> None:
+        """
+        Writes an OME-XML metadata file for the pyramid.
+        """
         ome_metadata = ome_types.model.OME()
         ome_metadata.images.append(
             ome_types.model.Image(
@@ -112,7 +147,11 @@ class PyramidCompositor:
         with open(self._ome_metadata_file, "w") as fw:
             fw.write(str(ome_metadata.to_xml()))
 
+
     def _create_zattr_file(self) -> None:
+        """
+        Creates a .zattrs file for the zarr pyramid.
+        """
         attr_dict: dict = {}
         multiscale_metadata: list = []
         for key in self._plate_image_shapes:
@@ -128,6 +167,9 @@ class PyramidCompositor:
             json.dump(final_attr_dict, json_file)
 
     def _create_zgroup_file(self) -> None:
+        """
+        Creates .zgroup files for the zarr pyramid.
+        """
         zgroup_dict = {"zarr_format": 2}
 
         with open(f"{self._pyramid_file_name}/data.zarr/0/.zgroup", "w") as json_file:
@@ -137,16 +179,25 @@ class PyramidCompositor:
             json.dump(zgroup_dict, json_file)
 
     def _create_auxilary_files(self) -> None:
-        # create ome xml metadata
+        """
+        Creates auxiliary files (OME-XML, .zattrs, .zgroup) for the pyramid.
+        """
         self._create_xml()
-        # create zattrs file
         self._create_zattr_file()
-        # create zgroup file
         self._create_zgroup_file()
 
     def _write_tile_data(
         self, level: int, channel: int, y_index: int, x_index: int
     ) -> None:
+        """
+        Writes the chunk file at the specified level, channel, y_index, and x_index.
+
+        Args:
+            level (int): The level of the pyramid.
+            channel (int): The channel of the pyramid.
+            y_index (int): The y-index of the tile.
+            x_index (int): The x-index of the tile.
+        """
         y_range = [
             y_index * CHUNK_SIZE,
             min((y_index + 1) * CHUNK_SIZE, self._zarr_arrays[level].shape[3]),
@@ -206,6 +257,12 @@ class PyramidCompositor:
         ].write(assembled_image).result()
 
     def set_well_map(self, well_map: dict) -> None:
+        """
+        Sets the well map for the pyramid.
+
+        Args:
+            well_map (dict): A dictionary mapping well coordinates to file paths.
+        """
         self._well_map = well_map
         self._well_image_shapes = {}
         for coord in well_map:
@@ -281,6 +338,9 @@ class PyramidCompositor:
         self._create_auxilary_files()
 
     def reset_composition(self) -> None:
+        """
+        Resets the pyramid composition by removing the pyramid file and clearing internal data structures.
+        """
         shutil.rmtree(self._pyramid_file_name)
         self._well_map = None
         self._plate_image_shapes = None
@@ -291,25 +351,37 @@ class PyramidCompositor:
     def get_tile_data(
         self, level: int, channel: int, y_index: int, x_index: int
     ) -> None:
+        """
+        Retrieves tile data from the pyramid at the specified level, channel, y_index, and x_index.
 
+        This method checks if the requested tile data is already in the cache. If not, it calls
+        the `_write_tile_data` method to generate the tile data and add it to the cache.
+
+        Args:
+            level (int): The level of the pyramid.
+            channel (int): The channel of the pyramid.
+            y_index (int): The y-index of the tile.
+            x_index (int): The x-index of the tile.
+
+        Raises:
+            ValueError: If the well map is not set, the requested level does not exist,
+                the requested channel does not exist, or the requested y_index or x_index
+                is out of bounds.
+        """
         if self._well_map is None:
-            print("No well map is set. Unable to generate pyramid")
-            return
+            raise ValueError("No well map is set. Unable to generate pyramid")
+
         if level not in self._well_image_shapes:
-            print(f"Requested level ({level}) does not exist")
-            return
+            raise ValueError(f"Requested level ({level}) does not exist")
 
         if channel >= self._num_channels:
-            print(f"Requested channel ({channel}) does not exist")
-            return
+            raise ValueError(f"Requested channel ({channel}) does not exist")
 
         if y_index > (self._plate_image_shapes[level][3] // CHUNK_SIZE):
-            print(f"Requested y index ({y_index}) does not exist")
-            return
+            raise ValueError(f"Requested y index ({y_index}) does not exist")
 
         if x_index > (self._plate_image_shapes[level][4] // CHUNK_SIZE):
-            print(f"Requested y index ({x_index}) does not exist")
-            return
+            raise ValueError(f"Requested y index ({x_index}) does not exist")
 
         if (level, channel, y_index, x_index) in self._tile_cache:
             return
