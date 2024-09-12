@@ -41,8 +41,8 @@ def get_zarr_read_spec(file_path: str) -> dict:
         "open": True,
         "context": {
             "cache_pool": {},
-            "data_copy_concurrency": {"limit": os.cpu_count()},
-            "file_io_concurrency": {"limit": os.cpu_count()},
+            "data_copy_concurrency": {"limit": os.cpu_count() // 2},
+            "file_io_concurrency": {"limit": os.cpu_count() // 2},
             "file_io_sync": False,
         },
     }
@@ -76,12 +76,18 @@ def get_zarr_write_spec(
             "shape": base_shape,
             "chunks": [1, 1, 1, chunk_size, chunk_size],
             "dtype": np.dtype(dtype).str,
-            "compressor" : {"id": "blosc", "cname": "zstd", "clevel": 1, "shuffle": 1, "blocksize": 0},
+            "compressor": {
+                "id": "blosc",
+                "cname": "zstd",
+                "clevel": 1,
+                "shuffle": 1,
+                "blocksize": 0,
+            },
         },
         "context": {
             "cache_pool": {},
-            "data_copy_concurrency": {"limit": os.cpu_count()//2},
-            "file_io_concurrency": {"limit": os.cpu_count()//2},
+            "data_copy_concurrency": {"limit": os.cpu_count() // 2},
+            "file_io_concurrency": {"limit": os.cpu_count() // 2},
             "file_io_sync": False,
         },
     }
@@ -146,7 +152,6 @@ class PyramidCompositor:
 
         with open(self._ome_metadata_file, "w") as fw:
             fw.write(str(ome_metadata.to_xml()))
-
 
     def _create_zattr_file(self) -> None:
         """
