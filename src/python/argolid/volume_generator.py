@@ -5,6 +5,7 @@ import tensorstore as ts
 import numpy as np
 import concurrent.futures
 from multiprocessing import get_context
+import json
 
 
 CHUNK_SIZE = 1024
@@ -61,8 +62,8 @@ class VolumeGenerator:
             "delete_existing": False,
             "open": True,
             "metadata" : {
-                "shape" : [t_size, c_size, z_size, self._Y, self._X],
-                "chunks" : [1,1,1,CHUNK_SIZE,CHUNK_SIZE],
+                "shape" : [c_size, z_size, self._Y, self._X],
+                "chunks" : [1,1,CHUNK_SIZE,CHUNK_SIZE],
                 "dtype" : np.dtype(dtype).str,
                 "dimension_separator" : "/",
                 "compressor" : {"id": "blosc", "cname": "zstd", "clevel": 1, "shuffle": 1, "blocksize": 0},
@@ -83,7 +84,6 @@ class VolumeGenerator:
         zarr_spec = args[1]
         z = args[2] 
         c = args[3] 
-        t = args[4]
 
         zarr_array = ts.open(zarr_spec).result()
         write_futures = []
@@ -94,7 +94,7 @@ class VolumeGenerator:
                 y_max = min([br.Y, y + CHUNK_SIZE])
                 for x in range(0, br.X, CHUNK_SIZE):
                     x_max = min([br.X, x + CHUNK_SIZE])
-                    write_futures.append(zarr_array[t,c,z,y:y_max, x:x_max].write(br[y:y_max, x:x_max,0,0,0].squeeze()))
+                    write_futures.append(zarr_array[c,z,y:y_max, x:x_max].write(br[y:y_max, x:x_max,0,0,0].squeeze()))
 
             for future in write_futures:
                     future.result()
@@ -125,18 +125,51 @@ class VolumeGenerator:
         with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count()//2, mp_context=get_context("spawn")) as executor:
             executor.map(self.layer_writer, arg_list) 
 
+
+
+
+
 class PyramidGenerator3D:
     def __init__(self, zarr_loc_dir, base_level):
         self._zarr_loc_dir = zarr_loc_dir
         self._base_level = base_level
 
+    def calculate_downsampling_factors(self, dimensions, downsampling_steps):
+        """
+        Calculate downsampling factors to make the final voxels approximately cubic.
+        
+        Args:
+            dimensions (tuple): A tuple containing the original dimensions (L_x, L_y, L_z).
+            downsampling_steps (int): The number of times to downsample along each axis.
+
+        Returns:
+            list: A list of downsampling factors along each axis (r_x, r_y, r_z).
+        """
+        L_x, L_y, L_z = dimensions
+
+        # Calculate the geometric mean of the cuboid dimensions
+        geometric_mean = (L_x * L_y * L_z) ** (1 / 3)
+
+        # Calculate initial downsampling factors based on the geometric mean
+        r_x = L_x / geometric_mean
+        r_y = L_y / geometric_mean
+        r_z = L_z / geometric_mean
+
+        # Normalize the factors and adjust them to fit the downsampling steps
+        downsampling_factors = [
+            np.round(r_x ** (1 / downsampling_steps)),
+            np.round(r_y ** (1 / downsampling_steps)),
+            np.round(r_z ** (1 / downsampling_steps)),
+        ]
+        
+        return downsampling_factors
 
 
     def downsample_pyramid(self, level):
 
         ds_spec = {
                     "driver": "downsample",
-                    "downsample_factors": [1,1,2**level, 2**level, 2**level],
+                    "downsample_factors": [1,2**level, 2**level, 2**level],
                     "downsample_method": "mean",
                     "base": {
                                 "driver": "zarr", 
@@ -148,7 +181,7 @@ class PyramidGenerator3D:
                 }
 
         ds_zarr_array = ts.open(ds_spec).result()
-        [T, C, Z, Y, X] = ds_zarr_array.shape
+        [C, Z, Y, X] = ds_zarr_array.shape
         ds_write_spec = {
             "driver":"zarr",
             "kvstore":{
@@ -159,7 +192,7 @@ class PyramidGenerator3D:
             "delete_existing": True,
             "metadata" : {
                 "shape" : ds_zarr_array.shape,
-                "chunks" : [1,1,1,CHUNK_SIZE,CHUNK_SIZE],
+                "chunks" : [1,1,CHUNK_SIZE,CHUNK_SIZE],
                 "dtype" : np.dtype(ds_zarr_array.dtype.numpy_dtype).str,
                 "dimension_separator" : "/",
                 "compressor" : {"id": "blosc", "cname": "zstd", "clevel": 1, "shuffle": 1, "blocksize": 0},
@@ -168,19 +201,75 @@ class PyramidGenerator3D:
 
         ds_zarr_array_write = ts.open(ds_write_spec).result()
         write_futures = []
-        for t in range(T):
-            for c in range(C):
-                for z in range(Z):
-                    for y in range(0, Y, CHUNK_SIZE):
-                        y_max = min([Y, y + CHUNK_SIZE])
-                        for x in range(0, X, CHUNK_SIZE):
-                            x_max = min([X, x + CHUNK_SIZE])
-                            write_futures.append(ds_zarr_array_write[ t, c, z, y:y_max, x:x_max].write(ds_zarr_array[ t, c, z, y:y_max, x:x_max].read().result()))
+        for c in range(C):
+            for z in range(Z):
+                for y in range(0, Y, CHUNK_SIZE):
+                    y_max = min([Y, y + CHUNK_SIZE])
+                    for x in range(0, X, CHUNK_SIZE):
+                        x_max = min([X, x + CHUNK_SIZE])
+                        write_futures.append(ds_zarr_array_write[c, z, y:y_max, x:x_max].write(ds_zarr_array[c, z, y:y_max, x:x_max].read().result()))
 
         for future in write_futures:
             future.result()
 
+    def _create_zattr_file(self, min_level, num_levels) -> None:
+        """
+        Creates a .zattrs file for the zarr pyramid.
+        """
+        attr_dict: dict = {}
+
+        axes_metadata = [
+                            {
+                                "name": "c",
+                                "type": "channel"
+                            },
+                            {
+                                "name": "z",
+                                "type": "space",
+                                "unit": "micrometer"
+                            },
+                            {
+                                "name": "y",
+                                "type": "space",
+                                "unit": "micrometer"
+                            },
+                            {
+                                "name": "x",
+                                "type": "space",
+                                "unit": "micrometer"
+                            }
+                        ]
+        attr_dict["axes"] = axes_metadata
+        multiscale_metadata: list = []
+        for key in range(min_level, min_level + num_levels):
+            metadata =  {
+                            "coordinateTransformations": [
+                                {
+                                    "scale": [
+                                        1,
+                                        2**key,
+                                        2**key,
+                                        2**key
+                                    ],
+                                    "type": "scale"
+                                }
+                            ],
+                            "path": f"{key}"
+                        }
+            multiscale_metadata.append(metadata)
+
+        attr_dict["datasets"] = multiscale_metadata
+        attr_dict["version"] = "0.4"
+        attr_dict["name"] = "test_image"
+        attr_dict["metadata"] = {"method": "mean"}
+
+        final_attr_dict = {"multiscales": [attr_dict]}
+
+        with open(f"{self._zarr_loc_dir}/.zattrs", "w") as json_file:
+            json.dump(final_attr_dict, json_file)
+
     def generate_pyramid(self):
         num_levels = 6 # for now
+        self._create_zattr_file(self._base_level, num_levels)
         with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count()//2, mp_context=get_context("spawn")) as executor:
             executor.map(self.downsample_pyramid, range(num_levels)) 
