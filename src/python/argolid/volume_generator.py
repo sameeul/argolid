@@ -23,7 +23,7 @@ class VolumeGenerator:
         _group_by (str): Criterion for grouping images ('c', 't', or 'z').
         _file_pattern (str): Pattern to match the image files.
         _out_dir (str): Output directory for the generated Zarr array.
-        _out_name (str): Name of the output Zarr array.
+        _image_name (str): Name of the output Zarr array.
         _X (int): Width of the images.
         _Y (int): Height of the images.
         files (List[str]): List of image file paths.
@@ -36,26 +36,25 @@ class VolumeGenerator:
         group_by: str,
         file_pattern: str,
         out_dir: str,
-        out_name: str,
+        image_name: str,
+        base_scale_key: int = 0
     ) -> None:
         self._source_dir: str = source_dir
         self._group_by: str = group_by
         self._file_pattern: str = file_pattern
         self._out_dir: str = out_dir
-        self._out_name: str = out_name
+        self._image_name: str = image_name
         self._X: int
         self._Y: int
         self.files: List[str]
         self._zarr_spec: dict
+        self._base_scale_key: int = base_scale_key
 
     def init_base_zarr_file(self):
         # find out what are the dimension of the zarr array
         fps = fp.FilePattern(self._source_dir, self._file_pattern)
         groups = [fi[0] for fi, _ in fps(group_by=self._group_by)]
         dimensions = [v for t in groups for v in t if isinstance(v, int)]
-        dim_min = min(dimensions)
-        dim_max = max(dimensions)
-        replace_value = f"({dim_min}-{dim_max})"
         # Get the number of layers to stack
         dim_size = len(dimensions)
         self.files = []
@@ -66,6 +65,18 @@ class VolumeGenerator:
             self._X = br.X
             self._Y = br.Y
             dtype = br.dtype
+            if br.physical_size_x[1] is not None:
+                self._x_unit = br.physical_size_x[1]
+            else:
+                self._x_unit = "micrometer"
+            if br.physical_size_y[1] is not None:
+                self._y_unit = br.physical_size_y[1]
+            else:
+                self._y_unit = "micrometer"
+            if br.physical_size_z[1] is not None:
+                self._z_unit = br.physical_size_z[1]
+            else:
+                self._z_unit = "micrometer"
 
         self._Z = 1
         self._T = 1
@@ -84,7 +95,7 @@ class VolumeGenerator:
             "driver": "zarr",
             "kvstore": {
                 "driver": "file",
-                "path": f"{self._out_dir}/{self._out_name}/0",
+                "path": f"{self._out_dir}/{self._image_name}/{self._base_scale_key}",
             },
             "create": True,
             "delete_existing": False,
@@ -147,6 +158,7 @@ class VolumeGenerator:
         """
         self.init_base_zarr_file()
         self.write_image_stack()
+        self._create_zattr_file()
 
     def write_image_stack(self):
         """
@@ -172,25 +184,65 @@ class VolumeGenerator:
         ) as executor:
             executor.map(self.layer_writer, arg_list)
 
+    def _get_default_axes_metadata(self) -> List[dict]:
+        """
+        Generate the default axes metadata for the Zarr array.
+        Returns:
+            List[dict]: List of dictionaries representing the axes metadata.
+        """
+        axes_metadata: List[dict] = [
+                        {"name": "c", "type": "channel"},
+                        {"name": "z", "type": "space", "unit": "micrometer"},
+                        {"name": "y", "type": "space", "unit": "micrometer"},
+                        {"name": "x", "type": "space", "unit": "micrometer"},
+                    ]
+        return axes_metadata
 
-    def generate_downsampled_images(self):
-        min_dim = min(self._X, self._Y, self._Z)
-        max_level = int(np.log2(min_dim))
-        min_level = int(np.log2(512))
-        base_level = 0
-        pyr_gen = PyramidGenerator3D(f"{self._out_dir}/{self._out_name}",str(base_level))
-        for level in range(base_level, base_level+max_level-min_level):
-            self.downsample_pyramid(level)
 
+    def _create_zattr_file(self) -> None:
+        """
+        Creates a .zattrs file for the zarr pyramid.
+        """
+        attr_dict: dict = {}
+        
+        if os.path.exists(f"{self._out_dir}/{self._image_name}/.zattrs"):
+            with open(f"{self._out_dir}/{self._image_name}/.zattrs", "r") as json_file:
+                attr_dict_base = json.load(json_file)         
+                if "axes" in attr_dict_base:
+                    axes_metadata = attr_dict_base["axes"]
+                else:
+                    axes_metadata = self._get_default_axes_metadata()
+        else:
+            axes_metadata = self._get_default_axes_metadata()
 
+        attr_dict["axes"] = axes_metadata
+        multiscale_metadata: list = [
+            {
+            "coordinateTransformations": [
+                {"scale": [1, 1, 1, 1], "type": "scale"}
+            ],
+            "path": f"{self._base_scale_key}",
+            }
+        ]
+
+        attr_dict["datasets"] = multiscale_metadata
+        attr_dict["version"] = "0.4"
+        attr_dict["name"] = self._image_name
+        attr_dict["metadata"] = {"method": "mean"}
+
+        final_attr_dict = {"multiscales": [attr_dict]}
+
+        with open(f"{self._out_dir}/{self._image_name}/.zattrs", "w") as json_file:
+            json.dump(final_attr_dict, json_file)
 
 class PyramidGenerator3D:
-    def __init__(self, zarr_loc_dir, base_level):
+    def __init__(self, zarr_loc_dir, base_scale_key):
         self._zarr_loc_dir = zarr_loc_dir
-        self._base_level = base_level
+        self._base_scale_key = base_scale_key
+
+        self._image_name = os.path.basename(self._zarr_loc_dir)
 
     def downsample_pyramid(self, level):
-
         ds_spec = {
             "driver": "downsample",
             "downsample_factors": [1, 2**level, 2**level, 2**level],
@@ -199,7 +251,7 @@ class PyramidGenerator3D:
                 "driver": "zarr",
                 "kvstore": {
                     "driver": "file",
-                    "path": f"{self._zarr_loc_dir}/{self._base_level}",
+                    "path": f"{self._zarr_loc_dir}/{self._base_scale_key}",
                 },
             },
         }
@@ -246,11 +298,13 @@ class PyramidGenerator3D:
         for future in write_futures:
             future.result()
 
-    def _create_zattr_file(self, min_level, num_levels) -> None:
+    def _create_zattr_file(self, num_levels) -> None:
         """
         Creates a .zattrs file for the zarr pyramid.
         """
         attr_dict: dict = {}
+
+        # add logic to constrain num_levels
 
         axes_metadata = [
             {"name": "c", "type": "channel"},
@@ -260,10 +314,21 @@ class PyramidGenerator3D:
         ]
         attr_dict["axes"] = axes_metadata
         multiscale_metadata: list = []
-        for key in range(min_level, min_level + num_levels):
+        downsample_factor = 1
+        base_scale_metadata = {
+            "coordinateTransformations": [
+                {"scale": [1, downsample_factor, downsample_factor, downsample_factor], "type": "scale"}
+            ],
+            "path": f"{self._base_scale_key}",
+        }
+
+        multiscale_metadata.append(base_scale_metadata)
+
+        for key in range(1, num_levels+1):
+            downsample_factor *= 2
             metadata = {
                 "coordinateTransformations": [
-                    {"scale": [1, 2**key, 2**key, 2**key], "type": "scale"}
+                    {"scale": [1, downsample_factor, downsample_factor, downsample_factor], "type": "scale"}
                 ],
                 "path": f"{key}",
             }
@@ -271,7 +336,7 @@ class PyramidGenerator3D:
 
         attr_dict["datasets"] = multiscale_metadata
         attr_dict["version"] = "0.4"
-        attr_dict["name"] = "test_image"
+        attr_dict["name"] = self._image_name
         attr_dict["metadata"] = {"method": "mean"}
 
         final_attr_dict = {"multiscales": [attr_dict]}
@@ -279,11 +344,9 @@ class PyramidGenerator3D:
         with open(f"{self._zarr_loc_dir}/.zattrs", "w") as json_file:
             json.dump(final_attr_dict, json_file)
 
-    def generate_pyramid(self, start_level, end_level):
-
-        num_levels = end_level-start_level+1
-        self._create_zattr_file(self._base_level, num_levels)
+    def generate_pyramid(self, num_levels):
+        self._create_zattr_file(num_levels)
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=os.cpu_count() // 2, mp_context=get_context("spawn")
         ) as executor:
-            executor.map(self.downsample_pyramid, range(num_levels))
+            executor.map(self.downsample_pyramid, range(1, num_levels+1))
