@@ -6,8 +6,7 @@ import numpy as np
 import concurrent.futures
 from multiprocessing import get_context
 import json
-from typing import List, Tuple
-
+from typing import List, Tuple, Dict, Any
 CHUNK_SIZE = 1024
 
 
@@ -26,9 +25,32 @@ class VolumeGenerator:
         _image_name (str): Name of the output Zarr array.
         _X (int): Width of the images.
         _Y (int): Height of the images.
+        _Z (int): Depth of the volume.
+        _T (int): Number of time points.
+        _C (int): Number of channels.
+        _x_unit (str): Unit of measurement for X dimension.
+        _y_unit (str): Unit of measurement for Y dimension.
+        _z_unit (str): Unit of measurement for Z dimension.
         files (List[str]): List of image file paths.
-        _zarr_spec (dict): Specification for the Zarr array.
-    """
+        _zarr_spec (Dict[str, Any]): Specification for the Zarr array.
+        _base_scale_key (int): Base scale key for the Zarr array.
+    """    
+    _source_dir: str
+    _group_by: str
+    _file_pattern: str
+    _out_dir: str
+    _image_name: str
+    _X: int
+    _Y: int
+    _Z: int
+    _T: int
+    _C: int
+    _x_unit: str
+    _y_unit: str
+    _z_unit: str
+    files: List[str]
+    _zarr_spec: Dict[str, Any]
+    _base_scale_key: int
 
     def __init__(
         self,
@@ -39,18 +61,31 @@ class VolumeGenerator:
         image_name: str,
         base_scale_key: int = 0
     ) -> None:
-        self._source_dir: str = source_dir
-        self._group_by: str = group_by
-        self._file_pattern: str = file_pattern
-        self._out_dir: str = out_dir
-        self._image_name: str = image_name
-        self._X: int
-        self._Y: int
-        self.files: List[str]
-        self._zarr_spec: dict
-        self._base_scale_key: int = base_scale_key
+        """
+        Initialize the VolumeGenerator.
 
+        Args:
+            source_dir (str): Directory containing the source image files.
+            group_by (str): Criterion for grouping images ('c', 't', or 'z').
+            file_pattern (str): Pattern to match the image files.
+            out_dir (str): Output directory for the generated Zarr array.
+            image_name (str): Name of the output Zarr array.
+            base_scale_key (int, optional): Base scale key for the Zarr array. Defaults to 0.
+        """
+        self._source_dir = source_dir
+        self._group_by = group_by
+        self._file_pattern = file_pattern
+        self._out_dir = out_dir
+        self._image_name = image_name
+        self._base_scale_key = base_scale_key
+        
     def init_base_zarr_file(self):
+        """
+        Initialize the base Zarr file by determining dimensions and setting up the Zarr specification.
+
+        This method analyzes the source files, determines the dimensions of the Zarr array,
+        and sets up the Zarr specification for writing the data.
+        """
         # find out what are the dimension of the zarr array
         fps = fp.FilePattern(self._source_dir, self._file_pattern)
         groups = [fi[0] for fi, _ in fps(group_by=self._group_by)]
@@ -120,8 +155,7 @@ class VolumeGenerator:
                 "file_io_sync": False,
             },
         }
-
-    def layer_writer(self, args: Tuple[str, dict, int, int]) -> None:
+    def layer_writer(self, args: Tuple[str, Dict[str, Any], int, int]) -> None:
         """
         Write a single layer of the volume to the Zarr array.
 
@@ -236,14 +270,57 @@ class VolumeGenerator:
             json.dump(final_attr_dict, json_file)
 
 class PyramidGenerator3D:
+    """
+    A class for generating multi-resolution pyramids from Zarr arrays.
+
+    This class handles the creation of downsampled versions of a base Zarr array,
+    forming a multi-resolution pyramid for efficient data access at different scales.
+
+    Attributes:
+        _zarr_loc_dir (str): Directory containing the base Zarr array.
+        _base_scale_key (int): Key of the base scale in the Zarr array.
+        _image_name (str): Name of the image derived from the Zarr directory.
+    """
+
+    _zarr_loc_dir: str
+    _base_scale_key: int
+    _image_name: str
+    
     def __init__(self, zarr_loc_dir, base_scale_key):
+        """
+        Initialize the PyramidGenerator3D.
+
+        Args:
+            zarr_loc_dir (str): Directory containing the base Zarr array.
+            base_scale_key (int): Key of the base scale in the Zarr array.
+        """
         self._zarr_loc_dir = zarr_loc_dir
         self._base_scale_key = base_scale_key
 
         self._image_name = os.path.basename(self._zarr_loc_dir)
 
-    def downsample_pyramid(self, level):
-        ds_spec = {
+    def downsample_pyramid(self, level: int) -> None:
+        """
+        Downsamples the pyramid at the specified level.
+
+        This method creates a downsampled version of the base image at the given pyramid level.
+        It uses the TensorStore library to read the base image, downsample it, and write the
+        result to a new Zarr array.
+
+        Args:
+            level (int): The pyramid level to generate. This determines the downsampling factor,
+                         which is 2^level in each dimension.
+
+        The method performs the following steps:
+        1. Sets up the downsampling specification using TensorStore.
+        2. Opens the downsampled array for reading.
+        3. Creates a new Zarr array specification for writing the downsampled data.
+        4. Opens the new Zarr array for writing.
+        5. Reads chunks from the downsampled array and writes them to the new Zarr array.
+
+        The downsampled array is written in chunks to optimize performance and memory usage.
+        """
+        ds_spec: Dict[str, Any] = {
             "driver": "downsample",
             "downsample_factors": [1, 2**level, 2**level, 2**level],
             "downsample_method": "mean",
@@ -256,9 +333,9 @@ class PyramidGenerator3D:
             },
         }
 
-        ds_zarr_array = ts.open(ds_spec).result()
+        ds_zarr_array: ts.TensorStore = ts.open(ds_spec).result()
         [C, Z, Y, X] = ds_zarr_array.shape
-        ds_write_spec = {
+        ds_write_spec: Dict[str, Any] = {
             "driver": "zarr",
             "kvstore": {
                 "driver": "file",
@@ -281,8 +358,8 @@ class PyramidGenerator3D:
             },
         }
 
-        ds_zarr_array_write = ts.open(ds_write_spec).result()
-        write_futures = []
+        ds_zarr_array_write: ts.TensorStore = ts.open(ds_write_spec).result()
+        write_futures: List[ts.Future[None]] = []        
         for c in range(C):
             for z in range(Z):
                 for y in range(0, Y, CHUNK_SIZE):
@@ -298,7 +375,7 @@ class PyramidGenerator3D:
         for future in write_futures:
             future.result()
 
-    def _create_zattr_file(self, num_levels) -> None:
+    def _create_zattr_file(self, num_levels: int) -> None:        
         """
         Creates a .zattrs file for the zarr pyramid.
         """
@@ -344,7 +421,16 @@ class PyramidGenerator3D:
         with open(f"{self._zarr_loc_dir}/.zattrs", "w") as json_file:
             json.dump(final_attr_dict, json_file)
 
-    def generate_pyramid(self, num_levels):
+    def generate_pyramid(self, num_levels: int) -> None:
+        """
+        Generate the multi-resolution pyramid.
+
+        This method creates the .zattrs file for the pyramid and generates
+        downsampled versions of the base image for each specified level.
+
+        Args:
+            num_levels (int): Number of pyramid levels to generate.
+        """
         self._create_zattr_file(num_levels)
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=os.cpu_count() // 2, mp_context=get_context("spawn")
