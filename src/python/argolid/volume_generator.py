@@ -7,7 +7,7 @@ import concurrent.futures
 from multiprocessing import get_context
 import json
 from typing import List, Tuple, Dict, Any
-CHUNK_SIZE = 1024
+
 
 
 class VolumeGenerator:
@@ -52,6 +52,9 @@ class VolumeGenerator:
     _zarr_spec: Dict[str, Any]
     _base_scale_key: int
 
+    VALID_GROUP_BY = {'c', 't', 'z'}  # Define allowed values
+    CHUNK_SIZE = 1024
+    
     def __init__(
         self,
         source_dir: str,
@@ -72,13 +75,16 @@ class VolumeGenerator:
             image_name (str): Name of the output Zarr array.
             base_scale_key (int, optional): Base scale key for the Zarr array. Defaults to 0.
         """
+        if group_by not in self.VALID_GROUP_BY:
+            raise ValueError(f"group_by must be one of {self.VALID_GROUP_BY}")
+        
         self._source_dir = source_dir
         self._group_by = group_by
         self._file_pattern = file_pattern
         self._out_dir = out_dir
         self._image_name = image_name
-        self._base_scale_key = base_scale_key
-        
+        self._base_scale_key = base_scale_key        
+
     def init_base_zarr_file(self):
         """
         Initialize the base Zarr file by determining dimensions and setting up the Zarr specification.
@@ -137,7 +143,7 @@ class VolumeGenerator:
             "open": True,
             "metadata": {
                 "shape": [self._C, self._Z, self._Y, self._X],
-                "chunks": [1, 1, CHUNK_SIZE, CHUNK_SIZE],
+                "chunks": [1, 1, self.CHUNK_SIZE, self.CHUNK_SIZE],
                 "dtype": np.dtype(dtype).str,
                 "dimension_separator": "/",
                 "compressor": {
@@ -171,10 +177,10 @@ class VolumeGenerator:
         write_futures: List[ts.Future[None]] = []
         try:
             br: BioReader = BioReader(input_file, backend="tensorstore")
-            for y in range(0, br.Y, CHUNK_SIZE):
-                y_max: int = min([br.Y, y + CHUNK_SIZE])
-                for x in range(0, br.X, CHUNK_SIZE):
-                    x_max: int = min([br.X, x + CHUNK_SIZE])
+            for y in range(0, br.Y, self.CHUNK_SIZE):
+                y_max: int = min([br.Y, y + self.CHUNK_SIZE])
+                for x in range(0, br.X, self.CHUNK_SIZE):
+                    x_max: int = min([br.X, x + self.CHUNK_SIZE])
                     write_futures.append(
                         zarr_array[c, z, y:y_max, x:x_max].write(
                             br[y:y_max, x:x_max, 0, 0, 0].squeeze()
@@ -207,9 +213,11 @@ class VolumeGenerator:
             if self._group_by == "c":
                 c = count
             elif self._group_by == "t":
-                c = count
+                t = count
             elif self._group_by == "z":
                 z = count
+            else:
+                pass
 
             arg_list.append((file_name, self._zarr_spec, z, c, t))
             count += 1
@@ -345,7 +353,7 @@ class PyramidGenerator3D:
             "delete_existing": True,
             "metadata": {
                 "shape": ds_zarr_array.shape,
-                "chunks": [1, 1, CHUNK_SIZE, CHUNK_SIZE],
+                "chunks": [1, 1, self.CHUNK_SIZE, self.CHUNK_SIZE],
                 "dtype": np.dtype(ds_zarr_array.dtype.numpy_dtype).str,
                 "dimension_separator": "/",
                 "compressor": {
@@ -362,10 +370,10 @@ class PyramidGenerator3D:
         write_futures: List[ts.Future[None]] = []        
         for c in range(C):
             for z in range(Z):
-                for y in range(0, Y, CHUNK_SIZE):
-                    y_max = min([Y, y + CHUNK_SIZE])
-                    for x in range(0, X, CHUNK_SIZE):
-                        x_max = min([X, x + CHUNK_SIZE])
+                for y in range(0, Y, self.CHUNK_SIZE):
+                    y_max = min([Y, y + self.CHUNK_SIZE])
+                    for x in range(0, X, self.CHUNK_SIZE):
+                        x_max = min([X, x + self.CHUNK_SIZE])
                         write_futures.append(
                             ds_zarr_array_write[c, z, y:y_max, x:x_max].write(
                                 ds_zarr_array[c, z, y:y_max, x:x_max].read().result()
