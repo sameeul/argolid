@@ -203,6 +203,8 @@ class PyramidCompositor:
             y_index (int): The y-index of the tile.
             x_index (int): The x-index of the tile.
         """
+
+        # x_range and y_range are in global coordinates at the corresponding level
         y_range = [
             y_index * CHUNK_SIZE,
             min((y_index + 1) * CHUNK_SIZE, self._zarr_arrays[level].shape[3]),
@@ -226,17 +228,20 @@ class PyramidCompositor:
 
         row_start_pos = y_range[0]
         while row_start_pos < y_range[1]:
+            # row and col are well map coordinates
             row = row_start_pos // well_image_height
+            # local_y* and local_x* are coordintes in the chunk
             local_y_start = row_start_pos - y_range[0]
             tile_y_start = row_start_pos - row * well_image_height
-            tile_y_end = (row + 1) * well_image_height - row_start_pos
+            tile_y_dim = min((row + 1) * well_image_height - row_start_pos, y_range[1] - row_start_pos)
+            tile_y_end = tile_y_start + tile_y_dim
             col_start_pos = x_range[0]
             while col_start_pos < x_range[1]:
                 col = col_start_pos // well_image_width
                 local_x_start = col_start_pos - x_range[0]
                 tile_x_start = col_start_pos - col * well_image_width
-                tile_x_end = (col + 1) * well_image_width - col_start_pos
-
+                tile_x_dim = min((col + 1) * well_image_width - col_start_pos, x_range[1] - col_start_pos)
+                tile_x_end = tile_x_start + tile_x_dim
                 # read well zarr file
                 well_file_name = self._well_map.get((col, row, channel))
                 zarr_file_loc = Path(well_file_name) / "data.zarr/0/"
