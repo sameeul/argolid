@@ -143,7 +143,7 @@ class PyramidCompositor:
                             id=f"Channel:{i}",
                             samples_per_pixel=1,
                         )
-                        for i in range(self._plate_image_shapes[0][2])
+                        for i in range(self._plate_image_shapes[0][1])
                     ],
                     type=OME_DTYPE[str(self._image_dtype)],
                 ),
@@ -262,6 +262,7 @@ class PyramidCompositor:
             row_start_pos += tile_y_end - tile_y_start
 
         zarr_array = self._zarr_arrays[level]
+        print(assembled_image.sum())
         zarr_array[
             0, channel, 0, y_range[0] : y_range[1], x_range[0] : x_range[1]
         ].write(assembled_image).result()
