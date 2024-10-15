@@ -293,6 +293,7 @@ class PyramidGenerator3D:
     _zarr_loc_dir: str
     _base_scale_key: int
     _image_name: str
+    CHUNK_SIZE = 1024
     
     def __init__(self, zarr_loc_dir, base_scale_key):
         """
