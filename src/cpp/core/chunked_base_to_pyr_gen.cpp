@@ -140,15 +140,7 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
                             tensorstore::OpenMode::open,
                             tensorstore::ReadWriteMode::read).result());
     auto prev_image_shape = store1.domain().shape();
-    //auto read_chunk_shape = store1.chunk_layout().value().read_chunk_shape();
 
-    for (int i=0; i<num_dims; ++i){
-      PLOG_INFO << "prev_image_shape["<< i<< "]: " << prev_image_shape[i];
-    }
-    auto chunk_layout = store1.chunk_layout().value();
-    for (int i=0; i<num_dims; ++i){
-      PLOG_INFO << "read_chunk_shape["<< i<< "]: " << chunk_layout.read_chunk_shape()[i];
-    }
     auto prev_x_max = static_cast<std::int64_t>(prev_image_shape[x_dim]);
     auto prev_y_max = static_cast<std::int64_t>(prev_image_shape[y_dim]);
 

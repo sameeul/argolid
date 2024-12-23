@@ -32,10 +32,6 @@ tensorstore::Spec GetZarrSpecToWrite(   const std::string& filename,
                                         const std::vector<std::int64_t>& image_shape, 
                                         const std::vector<std::int64_t>& chunk_shape,
                                         const std::string& dtype){
-    for(auto i: chunk_shape){
-        PLOG_INFO << i;
-    }
-
     return tensorstore::Spec::FromJson({{"driver", "zarr"},
                             {"kvstore", {{"driver", "file"},
                                          {"path", filename}}
