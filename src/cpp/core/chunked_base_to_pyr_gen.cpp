@@ -153,7 +153,7 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
 
     new_image_shape[y_dim] = cur_y_max;
     new_image_shape[x_dim] = cur_x_max;
-
+    auto chunk_layout = store1.chunk_layout().value();
     chunk_shape[y_dim] = static_cast<std::int64_t>(chunk_layout.read_chunk_shape()[y_dim]);
     chunk_shape[x_dim] = static_cast<std::int64_t>(chunk_layout.read_chunk_shape()[x_dim]);
 
