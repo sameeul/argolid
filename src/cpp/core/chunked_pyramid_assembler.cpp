@@ -61,7 +61,7 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
                                     const std::string& output_file, 
                                     const std::string& scale_key, 
                                     VisType v, 
-                                    BS::thread_pool& th_pool)
+                                    BS::thread_pool<BS::tp::none>& th_pool)
 {
   int grid_x_max = 0, grid_y_max = 0, grid_c_max = 0;
   int grid_x_min = INT_MAX, grid_y_min = INT_MAX, grid_c_min = INT_MAX;

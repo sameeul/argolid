@@ -33,6 +33,6 @@ private:
     OmeTiffToChunkedConverter _tiff_to_chunk;
     ChunkedBaseToPyramid _base_to_pyramid;
     OmeTiffCollToChunked _tiff_coll_to_chunk;
-    BS::thread_pool _th_pool;
+    BS::thread_pool<BS::tp::none> _th_pool;
 };
 } // ns argolid

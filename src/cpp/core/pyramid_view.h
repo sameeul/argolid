@@ -33,7 +33,7 @@ public:
 private:
     std::string image_coll_path, pyramid_zarr_path, image_name;
     std::uint16_t x_spacing, y_spacing;
-    BS::thread_pool th_pool;
+    BS::thread_pool<BS::tp::none> th_pool;
     ImageInfo base_image;
 };
 }

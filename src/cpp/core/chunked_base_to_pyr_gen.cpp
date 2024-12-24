@@ -41,7 +41,7 @@ void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_chunked
                                                 int min_dim, 
                                                 VisType v, 
                                                 const std::unordered_map<std::int64_t, DSType>& channel_ds_config,
-                                                BS::thread_pool& th_pool)
+                                                BS::thread_pool<BS::tp::none>& th_pool)
 {
     int resolution = 1; // this gets doubled in each level up
     auto input_spec = [v, &input_chunked_dir, &base_level_key](){
@@ -122,7 +122,7 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
                                                     const std::string& output_file, const std::string& output_scale_key,
                                                     int resolution, VisType v, 
                                                     const std::unordered_map<std::int64_t, DSType>& channel_ds_config,
-                                                    BS::thread_pool& th_pool)
+                                                    BS::thread_pool<BS::tp::none>& th_pool)
 {
     auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
     auto input_spec = [v, &input_file, &input_scale_key](){

@@ -30,6 +30,6 @@ public:
                   const std::string& output_file, 
                   const std::string& scale_key, 
                   VisType v, 
-                  BS::thread_pool& th_pool);
+                  BS::thread_pool<BS::tp::none>& th_pool);
 };
 } // ns argolid
