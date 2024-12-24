@@ -1,6 +1,10 @@
 # Argolid
+`Argolid` is a Python package for working with volumetric data and generating multi-resolution pyramids. It provides classes for reading and writing pixel data, generating Zarr arrays, and creating multi-resolution pyramids.
 
-## Build Requirements
+## Installation
+You can install `Argolid` using pip (`pip install argolid`) or using `conda` (`conda install -c conda-forge argolid`).
+
+## Building from Source
 
 `Argolid` uses `Tensorstore` for reading and writing pixel data. So `Tensorstore` build requirements are needed to be satisfied. 
 For Linux, these are the requirements:
@@ -12,16 +16,18 @@ For Linux, these are the requirements:
 - `NASM`, for building *libjpeg-turbo*, *libaom*, and *dav1d* from source (default). Must be in `PATH`.Not required if `-DTENSORSTORE_USE_SYSTEM_{JPEG,LIBAOM,DAV1D}=ON` is specified.
 - `GNU Patch` or equivalent. Must be in `PATH`.
 
-
-## Building and Installing
-
 Here is an example of building and installing `Argolid` in a Python virtual environment.
 ```
 python -m virtualenv venv
 source venv/bin/activate
 pip install cmake
-git clone --recurse-submodules https://github.com/sameeul/argolid.git 
+git clone https://github.com/sameeul/argolid.git 
 cd argolid
+mkdir build_deps
+cd build_deps
+sh ../ci_utils/install_prereq_linux.sh
+cd ../
+export ARGOLID_DER_DIR=./build_deps/local_install
 python setup.py install
 ```
 
@@ -46,6 +52,7 @@ min_dim = 1024
 pyr_gen = PyramidGenerartor()
 pyr_gen.generate_from_single_image(input_file, output_dir, min_dim, "NG_Zarr", {0:"mode_max"})
 
+```
 Here is an example of generating a pyramid from a collection of images and a stitching vector.
 ```
 from argolid import PyramidGenerartor
@@ -58,7 +65,7 @@ pyr_gen = PyramidGenerartor()
 pyr_gen.generate_from_image_collection(input_dir, file_pattern, image_name, 
                                         output_dir, min_dim, "Viv", {1:"mean"})
 
-
+```
 
 Argolid provides two main classes for working with volumetric data and generating multi-resolution pyramids:
 
