@@ -13,7 +13,7 @@ public:
                                 int min_dim, 
                                 VisType v, 
                                 const std::unordered_map<std::int64_t, DSType>& channel_ds_config,
-                                BS::thread_pool& th_pool);
+                                BS::thread_pool<BS::tp::none>& th_pool);
 
 private:
     template<typename T>
@@ -21,6 +21,6 @@ private:
                                 const std::string& output_file, const std::string& output_scale_key,
                                 int resolution, VisType v,
                                 const std::unordered_map<std::int64_t, DSType>& channel_ds_config, 
-                                BS::thread_pool& th_pool);
+                                BS::thread_pool<BS::tp::none>& th_pool);
 };
 } // ns argolid

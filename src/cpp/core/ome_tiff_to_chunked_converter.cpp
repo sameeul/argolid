@@ -23,7 +23,7 @@ using ::tensorstore::internal_zarr::ChooseBaseDType;
 
 namespace argolid {
 void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const std::string& output_file, 
-                                      const std::string& scale_key, const VisType v, BS::thread_pool& th_pool){
+                                      const std::string& scale_key, const VisType v, BS::thread_pool<BS::tp::none>& th_pool){
   
   const auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
 
@@ -69,7 +69,7 @@ void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const st
     for(std::int64_t j=0; j<num_cols; ++j){
       std::int64_t x_start = j*chunk_shape[x_dim];
       std::int64_t x_end = std::min({(j+1)*chunk_shape[x_dim], image_width});
-      th_pool.push_task([&store1, &store2, x_start, x_end, y_start, y_end, x_dim=x_dim, y_dim=y_dim, v](){  
+      th_pool.detach_task([&store1, &store2, x_start, x_end, y_start, y_end, x_dim=x_dim, y_dim=y_dim, v](){  
 
         auto array = tensorstore::AllocateArray({y_end-y_start, x_end-x_start},tensorstore::c_order,
                                 tensorstore::value_init, store1.dtype());
@@ -94,7 +94,7 @@ void OmeTiffToChunkedConverter::Convert( const std::string& input_file, const st
 
     }
   }
-  th_pool.wait_for_tasks();
+  th_pool.wait();
 }
 } // ns argolid
 

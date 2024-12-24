@@ -41,7 +41,7 @@ void ChunkedBaseToPyramid::CreatePyramidImages( const std::string& input_chunked
                                                 int min_dim, 
                                                 VisType v, 
                                                 const std::unordered_map<std::int64_t, DSType>& channel_ds_config,
-                                                BS::thread_pool& th_pool)
+                                                BS::thread_pool<BS::tp::none>& th_pool)
 {
     int resolution = 1; // this gets doubled in each level up
     auto input_spec = [v, &input_chunked_dir, &base_level_key](){
@@ -122,7 +122,7 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
                                                     const std::string& output_file, const std::string& output_scale_key,
                                                     int resolution, VisType v, 
                                                     const std::unordered_map<std::int64_t, DSType>& channel_ds_config,
-                                                    BS::thread_pool& th_pool)
+                                                    BS::thread_pool<BS::tp::none>& th_pool)
 {
     auto [x_dim, y_dim, c_dim, num_dims] = GetZarrParams(v);
     auto input_spec = [v, &input_file, &input_scale_key](){
@@ -209,7 +209,7 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
                 auto x_end = std::min({(j+1)*chunk_shape[x_dim], cur_x_max});
                 auto prev_x_start = 2*x_start;
                 auto prev_x_end = std::min({2*x_end, prev_x_max});
-                th_pool.push_task([ &store1, &store2, 
+                th_pool.detach_task([ &store1, &store2, 
                                     prev_x_start, prev_x_end, prev_y_start, prev_y_end, 
                                     x_start, x_end, y_start, y_end, 
                                     x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, c, v, downsampling_func_ptr](){  
@@ -250,6 +250,6 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
         }
        
     }
-    th_pool.wait_for_tasks();
+    th_pool.wait();
 }
 } // ns argolid

@@ -97,7 +97,7 @@ namespace argolid {
 
       auto t4 = std::chrono::high_resolution_clock::now();
       for (const auto & [file_name, location]: coordinate_map) {
-        th_pool.push_task([ &dest, file_name=file_name, location=location, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, &whole_image, this]() {
+        th_pool.detach_task([ &dest, file_name=file_name, location=location, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, &whole_image, this]() {
 
           TENSORSTORE_CHECK_OK_AND_ASSIGN(auto source, tensorstore::Open(
             GetOmeTiffSpecToRead(image_coll_path + "/" + file_name),
@@ -135,7 +135,7 @@ namespace argolid {
         });
       }
 
-      th_pool.wait_for_tasks();
+      th_pool.wait();
     }
     base_image = whole_image;
   }

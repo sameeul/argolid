@@ -29,7 +29,7 @@ void test_zarr_pyramid_writer(){
 
     auto zpw = OmeTiffToChunkedConverter();
     auto t1 = std::chrono::high_resolution_clock::now();
-    BS::thread_pool th_pool;
+    BS::thread_pool<BS::tp::none> th_pool;
     zpw.Convert(input_file, output_file, "16", VisType::Viv ,th_pool);
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> et1 = t2-t1;
@@ -44,7 +44,7 @@ void test_zarr_pyramid_assembler()
 
     auto zpw = OmeTiffCollToChunked();
     auto t1 = std::chrono::high_resolution_clock::now();
-    BS::thread_pool th_pool;
+    BS::thread_pool<BS::tp::none> th_pool;
     zpw.Assemble(input_dir, stitch_vector, output_file, "17", VisType::PCNG, th_pool);
 
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -58,7 +58,7 @@ void test_zarr_pyramid_gen(){
     std::string output_root_dir = "/home/samee/axle/data/test_assembly_out";
     auto t1 = std::chrono::high_resolution_clock::now();
     auto zarr_pyr_gen = ChunkedBaseToPyramid();
-    BS::thread_pool th_pool;
+    BS::thread_pool<BS::tp::none> th_pool;
     auto channel_ds_config = std::unordered_map<std::int64_t, DSType>();
     zarr_pyr_gen.CreatePyramidImages(input_zarr_dir, output_root_dir, 17, 1024, VisType::Viv, channel_ds_config, th_pool);
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -102,7 +102,7 @@ void test_ome_tiff_coll_to_zarr_pyramid_gen_xml(){
     std::string image_name = "test_image";
     auto zpw = OmeTiffCollToChunked();
     auto t1 = std::chrono::high_resolution_clock::now();
-    BS::thread_pool th_pool;
+    BS::thread_pool<BS::tp::none> th_pool;
     //zpw.Assemble(input_dir, stitch_vector,output_file, VisType::Viv, th_pool);
     ImageInfo a;
     zpw.GenerateOmeXML(image_name, output_file, a);
