@@ -135,7 +135,7 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
     
     auto t4 = std::chrono::high_resolution_clock::now();
     for(const auto& i: image_vec){        
-      th_pool.push_task([&dest, i, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, &whole_image, grid_c_min, grid_x_min, grid_y_min]() {
+      th_pool.detach_task([&dest, i, x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, v, &whole_image, grid_c_min, grid_x_min, grid_y_min]() {
 
 
         TENSORSTORE_CHECK_OK_AND_ASSIGN(auto source, tensorstore::Open(
@@ -175,7 +175,7 @@ ImageInfo OmeTiffCollToChunked::Assemble(const std::string& input_dir,
       });
     }
 
-    th_pool.wait_for_tasks();
+    th_pool.wait();
   }
   return std::move(whole_image);
 }

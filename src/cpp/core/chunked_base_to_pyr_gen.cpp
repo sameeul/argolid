@@ -209,7 +209,7 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
                 auto x_end = std::min({(j+1)*chunk_shape[x_dim], cur_x_max});
                 auto prev_x_start = 2*x_start;
                 auto prev_x_end = std::min({2*x_end, prev_x_max});
-                th_pool.push_task([ &store1, &store2, 
+                th_pool.detach_task([ &store1, &store2, 
                                     prev_x_start, prev_x_end, prev_y_start, prev_y_end, 
                                     x_start, x_end, y_start, y_end, 
                                     x_dim=x_dim, y_dim=y_dim, c_dim=c_dim, c, v, downsampling_func_ptr](){  
@@ -250,6 +250,6 @@ void ChunkedBaseToPyramid::WriteDownsampledImage(   const std::string& input_fil
         }
        
     }
-    th_pool.wait_for_tasks();
+    th_pool.wait();
 }
 } // ns argolid
